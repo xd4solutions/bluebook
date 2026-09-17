@@ -251,6 +251,11 @@ table.lb-table td.lb-local input{min-width:100px;font-family:'IBM Plex Sans',san
 .ra-sig-pad .ph svg{width:22px;height:22px}
 .ra-sig-pad.signed{border-style:solid;border-color:var(--ok)}
 
+.lb-save[disabled]{opacity:.75;cursor:default;filter:none;transform:none}
+.ra-sending{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--warn);background:var(--warn-bg);border:1px solid rgba(181,130,10,.25);padding:9px 14px;border-radius:10px}
+.ra-spin{width:15px;height:15px;border-radius:50%;border:2.5px solid rgba(181,130,10,.3);border-top-color:var(--warn);flex-shrink:0;animation:raSpin .7s linear infinite}
+@keyframes raSpin{to{transform:rotate(360deg)}}
+
 /* ===== página pública do cliente (sem banner/menu/login) ===== */
 .pubwrap{max-width:960px;margin:0 auto;padding:28px 20px 90px}
 .pubhead{display:flex;align-items:center;gap:14px;margin-bottom:22px}
@@ -804,7 +809,8 @@ function renderRiskAssessment(){
 
     <div class="lb-section">
       <div class="lb-actions">
-        <button class="lb-save" onclick="raSave()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Enviar Risk Assessment</button>
+        <button class="lb-save" id="raSaveBtn" onclick="raSave()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Enviar Risk Assessment</button>
+        <div class="ra-sending" id="raSendingHint" style="display:none"><span class="ra-spin"></span>Enviando e gerando o PDF, isso pode levar até 15 segundos. Não feche esta página…</div>
         <button class="lb-print" onclick="raExportReport()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>Baixar uma cópia em PDF</button>
         <span class="lb-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Ao enviar, este formulário é salvo automaticamente no Google Drive da XD4Solutions.</span>
       </div>
@@ -1130,13 +1136,21 @@ let HTML2PDF_LOADING = null;
 function ensureHtml2Pdf(){
   if(window.html2pdf) return Promise.resolve();
   if(HTML2PDF_LOADING) return HTML2PDF_LOADING;
-  HTML2PDF_LOADING = new Promise((resolve, reject)=>{
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    s.onload = ()=>resolve();
-    s.onerror = ()=>reject(new Error('Falha ao carregar html2pdf.js'));
-    document.head.appendChild(s);
-  });
+  const sources = [
+    'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
+    'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js'
+  ];
+  function tryLoad(i){
+    return new Promise((resolve, reject)=>{
+      if(i >= sources.length){ reject(new Error('Falha ao carregar html2pdf.js de todas as fontes')); return; }
+      const s = document.createElement('script');
+      s.src = sources[i];
+      s.onload = ()=>resolve();
+      s.onerror = ()=>{ console.warn('Não consegui carregar', sources[i], '— tentando alternativa…'); tryLoad(i+1).then(resolve, reject); };
+      document.head.appendChild(s);
+    });
+  }
+  HTML2PDF_LOADING = tryLoad(0);
   return HTML2PDF_LOADING;
 }
 function blobToBase64(blob){
@@ -1166,6 +1180,7 @@ async function gerarPdfBlob(headHtml, bodyHtml){
   try{
     const el = holder.querySelector('.rp-page');
     await waitForImages(el);
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(_e){}
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
     const opt = {
       margin: [15,14,16,14], // topo, esquerda, baixo, direita (mm) — repete em cada página
@@ -1342,25 +1357,34 @@ function raToast(msg){
   setTimeout(()=>t.classList.remove('show'), msg.length>60 ? 7000 : 3200);
 }
 async function raSave(){
-  const s = document.getElementById('raStatus');
-  s.classList.add('saved');
-  document.getElementById('raStatusText').textContent = 'Salvo às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const btn = document.getElementById('raSaveBtn');
+  const hint = document.getElementById('raSendingHint');
+  btn.disabled = true;
+  hint.style.display = 'flex';
 
-  const rel = raBuildReport();
-  const pdfBlob = await gerarPdfBlob(rel.headHtml, rel.bodyHtml);
-  const extra = pdfBlob ? { pdfBase64: await blobToBase64(pdfBlob), nomeArquivoSugerido: rel.filename } : undefined;
-  if(!pdfBlob){ console.warn('PDF idêntico não pôde ser gerado no navegador; o Drive vai usar o layout padrão do Google Docs como alternativa.'); }
+  try{
+    const s = document.getElementById('raStatus');
+    s.classList.add('saved');
+    document.getElementById('raStatusText').textContent = 'Salvo às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
-  const r = await sendToDrive('risk_assessment', RA_STATE, extra);
-  if(r.reason==='timeout_assumed_ok'){
-    raToast('Risk Assessment enviado ao Google Drive (envio confirmado; aguardando resposta de detalhes)');
-  } else if(r.ok){
-    raToast('Risk Assessment salvo e enviado ao Google Drive');
+    const rel = raBuildReport();
+    const pdfBlob = await gerarPdfBlob(rel.headHtml, rel.bodyHtml);
+    const extra = pdfBlob ? { pdfBase64: await blobToBase64(pdfBlob), nomeArquivoSugerido: rel.filename } : undefined;
+    if(!pdfBlob){ console.warn('PDF idêntico não pôde ser gerado no navegador; o Drive vai usar o layout padrão do Google Docs como alternativa.'); }
+
+    const r = await sendToDrive('risk_assessment', RA_STATE, extra);
+    if(r.reason==='timeout_assumed_ok' || r.ok){
+      raShowThankYou();
+      return;
     }
-  else if(r.reason==='not_configured'){ raToast('Risk Assessment salvo localmente (Google Drive não configurado)'); }
-  else { console.error('Detalhe do erro de envio:', r); raToast('Falha ao enviar ao Drive: '+(r.reason||'erro desconhecido')+'. Veja o console (F12) para detalhes.'); }
-
-  raShowThankYou();
+    if(r.reason==='not_configured'){ raToast('Não foi possível enviar: Google Drive não configurado.'); }
+    else { console.error('Detalhe do erro de envio:', r); raToast('Falha ao enviar: '+(r.reason||'erro desconhecido')+'. Tente novamente.'); }
+  } finally {
+    if(document.getElementById('thankYouWrap').classList.contains('hidden')){
+      btn.disabled = false;
+      hint.style.display = 'none';
+    }
+  }
 }
 
 
