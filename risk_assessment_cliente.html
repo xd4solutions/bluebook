@@ -487,11 +487,10 @@ async function sendToDrive(kind, payload, extra){
     }
   }).catch(()=>{ /* já tratado no caminho principal; aqui é só best-effort */ });
 
-  // Timeout de segurança: a resposta do Apps Script às vezes fica "pendurada" no navegador
-  // (redirecionamento do Google) mesmo já tendo sido processada do lado do servidor.
-  // Sem isso, o painel nunca avisa nada — com isso, ele sempre responde em até 6s.
+  // Timeout de segurança. Não presumimos sucesso sem uma confirmação real do
+  // Apps Script, pois isso pode esconder falhas no envio ou na gravação do PDF.
   const timeoutPromise = new Promise(resolve => {
-    setTimeout(() => resolve({ok:true, reason:'timeout_assumed_ok', data:null}), 6000);
+    setTimeout(() => resolve({ok:false, reason:'response_timeout', data:null}), 30000);
   });
 
   try{
@@ -1170,11 +1169,11 @@ function blobToBase64(blob){
 async function gerarPdfBlob(headHtml, bodyHtml){
   try{ await ensureHtml2Pdf(); }catch(e){ console.error('html2pdf.js não carregou:', e); return null; }
 
-  // Fica dentro do fluxo normal do documento (position:absolute, não fixed),
-  // só deslocado bem pra fora da tela horizontalmente — é a forma mais estável
-  // de o html2canvas medir e capturar corretamente o elemento.
+  // Mantém o relatório na área renderizável. Elementos deslocados para
+  // left:-9999px podem resultar em um PDF válido, porém inteiramente branco.
+  // O z-index negativo evita que a cópia apareça sobre a interface.
   const holder = document.createElement('div');
-  holder.style.cssText = 'position:absolute;left:-9999px;top:0;width:210mm;background:#fff';
+  holder.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;z-index:-9999;pointer-events:none';
   // padding:0 aqui de propósito — a margem da página passa a ser controlada
   // pelo opt.margin do html2pdf logo abaixo, que se repete em TODAS as
   // páginas (documentos longos deixavam de ter respiro a partir da 2ª página).
@@ -1380,11 +1379,12 @@ async function raSave(){
     if(!pdfBlob){ console.warn('PDF idêntico não pôde ser gerado no navegador; o Drive vai usar o layout padrão do Google Docs como alternativa.'); }
 
     const r = await sendToDrive('risk_assessment', RA_STATE, extra);
-    if(r.reason==='timeout_assumed_ok' || r.ok){
+    if(r.ok){
       raShowThankYou();
       return;
     }
     if(r.reason==='not_configured'){ raToast('Não foi possível enviar: Google Drive não configurado.'); }
+    else if(r.reason==='response_timeout'){ raToast('O Google Drive não confirmou o envio. Verifique sua conexão e tente novamente.'); }
     else { console.error('Detalhe do erro de envio:', r); raToast('Falha ao enviar: '+(r.reason||'erro desconhecido')+'. Tente novamente.'); }
   } finally {
     if(document.getElementById('thankYouWrap').classList.contains('hidden')){
