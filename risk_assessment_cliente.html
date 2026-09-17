@@ -269,6 +269,8 @@ table.lb-table td.lb-local input{min-width:100px;font-family:'IBM Plex Sans',san
 .thankyou p{font-size:14px;color:var(--ink-2);line-height:1.6}
 .thankyou button{margin-top:22px;background:var(--sky);color:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:11px 20px;font-size:13.5px;font-weight:600}
 .thankyou button:hover{background:var(--paper);color:var(--ink)}
+.thankyou button.ty-primary{display:block;width:100%;margin-top:0;margin-bottom:12px;background:linear-gradient(135deg,var(--xd4),var(--blue));color:#fff;border:none;box-shadow:0 8px 20px rgba(43,169,224,.28)}
+.thankyou button.ty-primary:hover{filter:brightness(1.07);color:#fff}
 #raRootWrap.hidden,#thankYouWrap.hidden{display:none}
 </style>
 </head>
@@ -292,6 +294,7 @@ table.lb-table td.lb-local input{min-width:100px;font-family:'IBM Plex Sans',san
     <div class="ok-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
     <h1>Risk Assessment enviado!</h1>
     <p>Recebemos as informações e o registro já foi salvo no Google Drive da XD4Solutions. Obrigado por preencher.</p>
+    <button class="ty-primary" onclick="raViewSubmittedPdf()">Ver / baixar meu Risk Assessment em PDF</button>
     <button onclick="raRestart()">Preencher um novo Risk Assessment</button>
   </div>
 </div>
@@ -1167,10 +1170,11 @@ function blobToBase64(blob){
 async function gerarPdfBlob(headHtml, bodyHtml){
   try{ await ensureHtml2Pdf(); }catch(e){ console.error('html2pdf.js não carregou:', e); return null; }
 
-  // Importante: deixar left:0 (só sobe pra fora da tela verticalmente) — um left
-  // muito negativo bagunça a medição de largura do html2canvas e corta o conteúdo.
+  // Fica dentro do fluxo normal do documento (position:absolute, não fixed),
+  // só deslocado bem pra fora da tela horizontalmente — é a forma mais estável
+  // de o html2canvas medir e capturar corretamente o elemento.
   const holder = document.createElement('div');
-  holder.style.cssText = 'position:fixed;left:0;top:-10000px;width:210mm;background:#fff;z-index:-1';
+  holder.style.cssText = 'position:absolute;left:-9999px;top:0;width:210mm;background:#fff';
   // padding:0 aqui de propósito — a margem da página passa a ser controlada
   // pelo opt.margin do html2pdf logo abaixo, que se repete em TODAS as
   // páginas (documentos longos deixavam de ter respiro a partir da 2ª página).
@@ -1182,14 +1186,16 @@ async function gerarPdfBlob(headHtml, bodyHtml){
     await waitForImages(el);
     try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(_e){}
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const rect = el.getBoundingClientRect();
     const opt = {
       margin: [15,14,16,14], // topo, esquerda, baixo, direita (mm) — repete em cada página
       image: { type:'jpeg', quality:0.95 },
-      html2canvas: { scale:2, useCORS:true, backgroundColor:'#ffffff' },
+      html2canvas: { scale:2, useCORS:true, backgroundColor:'#ffffff', windowWidth:Math.ceil(rect.width), windowHeight:Math.ceil(rect.height) },
       jsPDF: { unit:'mm', format:'a4', orientation:'portrait' },
       pagebreak: { mode:'css' }
     };
     const blob = await window.html2pdf().set(opt).from(el).outputPdf('blob');
+    if(!blob || blob.size < 2000){ console.warn('PDF gerado parece vazio (tamanho', blob?blob.size:0, 'bytes) — descartando e usando alternativa.'); return null; }
     return blob;
   }catch(e){
     console.error('Falha ao gerar PDF com html2pdf.js:', e);
@@ -1368,6 +1374,7 @@ async function raSave(){
     document.getElementById('raStatusText').textContent = 'Salvo às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
     const rel = raBuildReport();
+    LAST_SUBMITTED_REPORT = rel; // guardado pra o cliente poder ver/baixar depois de enviar
     const pdfBlob = await gerarPdfBlob(rel.headHtml, rel.bodyHtml);
     const extra = pdfBlob ? { pdfBase64: await blobToBase64(pdfBlob), nomeArquivoSugerido: rel.filename } : undefined;
     if(!pdfBlob){ console.warn('PDF idêntico não pôde ser gerado no navegador; o Drive vai usar o layout padrão do Google Docs como alternativa.'); }
@@ -1388,6 +1395,11 @@ async function raSave(){
 }
 
 
+let LAST_SUBMITTED_REPORT = null;
+function raViewSubmittedPdf(){
+  if(!LAST_SUBMITTED_REPORT) return;
+  rpOpenWindow(rpShell(LAST_SUBMITTED_REPORT.title, LAST_SUBMITTED_REPORT.headHtml, LAST_SUBMITTED_REPORT.bodyHtml));
+}
 function raShowThankYou(){
   document.getElementById('raRootWrap').classList.add('hidden');
   document.getElementById('thankYouWrap').classList.remove('hidden');
