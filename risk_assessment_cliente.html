@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Risk Assessment — XD4 Blue Book</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B2545;--blue:#134074;--accent:#3A6EA5;--xd4:#2BA9E0;
+  --sky:#EEF3F9;--sky-line:#DCE6F1;--paper:#FFFFFF;
+  --ink:#1A2432;--ink-2:#5A6B7F;--ink-3:#8A99AB;--line:#E4EAF1;
+  --ok:#1E7B4F;--ok-bg:#E7F4EC;--warn:#B5820A;--warn-bg:#FBF3DE;
+  --crit:#B42318;--crit-bg:#FBEAE8;--draft:#8A99AB;--draft-bg:#F0F2F5;
+  --shadow:0 1px 2px rgba(11,37,69,.04),0 4px 14px rgba(11,37,69,.06),0 14px 30px -10px rgba(11,37,69,.07);
+  --shadow-lg:0 2px 4px rgba(11,37,69,.05),0 14px 34px rgba(11,37,69,.1),0 26px 50px -12px rgba(11,37,69,.14);
+  --grid-line:rgba(11,37,69,.035);
+}
+[data-theme="dark"]{
+  --navy:#0A1A30;--blue:#3A6EA5;--accent:#5B9BD5;--xd4:#2BA9E0;
+  --sky:#0E1622;--sky-line:#1C2838;--paper:#131C2A;
+  --ink:#E6EDF5;--ink-2:#9FB0C4;--ink-3:#6B7C90;--line:#22303F;
+  --ok:#3FB98A;--ok-bg:#12291F;--warn:#E3B341;--warn-bg:#2A230E;
+  --crit:#F27C6E;--crit-bg:#2A1512;--draft:#6B7C90;--draft-bg:#1A222E;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.4),0 14px 30px -10px rgba(0,0,0,.35);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.35),0 14px 34px rgba(0,0,0,.5),0 26px 50px -12px rgba(0,0,0,.6);
+  --grid-line:rgba(255,255,255,.035);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--sky);color:var(--ink);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+.mono{font-family:'IBM Plex Mono',monospace}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:var(--sky-line);border-radius:99px}
+svg{display:block}
+
+/* ===== DIGITAL LOGBOOK — AVIATION TECHNICAL LOG STYLE ===== */
+/* Cabeçalho estilo "Aircraft Technical Log": tarja de identificação,
+   placa de matrícula e faixa XD4, evocando documentação aeronáutica oficial. */
+.lb-head{position:relative;background:linear-gradient(135deg,var(--navy) 0%,var(--blue) 100%);border:1px solid var(--navy);border-radius:16px;padding:0;box-shadow:0 10px 30px rgba(11,37,69,.22);margin-bottom:22px;overflow:hidden}
+.lb-head::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:repeating-linear-gradient(90deg,var(--xd4) 0,var(--xd4) 34px,transparent 34px,transparent 44px)}
+.lb-head-main{display:flex;align-items:center;gap:18px;padding:22px 26px 20px;flex-wrap:wrap}
+.lb-head .lb-ic{width:54px;height:54px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;backdrop-filter:blur(4px)}
+.lb-head .lb-ic svg{width:27px;height:27px}
+.lb-head h1{font-size:20px;color:#fff;font-weight:700;letter-spacing:.01em}
+.lb-head .lb-sub{color:rgba(226,238,250,.82);font-size:13px;margin-top:3px;max-width:640px}
+.lb-head .lb-docmeta{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.lb-head .lb-chip{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#dceaf7;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);padding:3px 9px;border-radius:6px}
+.lb-head .lb-chip b{color:#fff;font-weight:700}
+.lb-status{margin-left:auto;align-self:flex-start;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;padding:7px 14px;border-radius:99px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.2);transition:.2s;white-space:nowrap}
+.lb-status .d{width:7px;height:7px;border-radius:50%;background:#F2C744;box-shadow:0 0 0 3px rgba(242,199,68,.25);animation:lbPulse 2s infinite}
+.lb-status.saved{background:rgba(63,185,138,.22);border-color:rgba(63,185,138,.4)}
+.lb-status.saved .d{background:#3FB98A;box-shadow:0 0 0 3px rgba(63,185,138,.28);animation:none}
+@keyframes lbPulse{0%,100%{opacity:1}50%{opacity:.45}}
+/* Barra de matrícula (tail number strip) */
+.lb-tailstrip{display:flex;align-items:stretch;border-top:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.14)}
+.lb-tailstrip .cell{flex:1;padding:9px 20px;border-right:1px solid rgba(255,255,255,.10);min-width:0}
+.lb-tailstrip .cell:last-child{border-right:none}
+.lb-tailstrip .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:rgba(198,216,235,.72);font-weight:600}
+.lb-tailstrip .v{font-family:'IBM Plex Mono',monospace;font-size:14px;color:#fff;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.lb-section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:0;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;transition:box-shadow .2s}
+.lb-section:hover{box-shadow:0 6px 22px rgba(11,37,69,.09)}
+.lb-section>h3{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);font-weight:700;margin:0;display:flex;align-items:center;gap:10px;padding:14px 24px;background:var(--sky);border-bottom:1px solid var(--line);counter-increment:lbsec}
+.lb-section>h3::before{content:counter(lbsec,decimal-leading-zero);font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:#fff;background:var(--accent);width:26px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.lb-section>h3 svg{width:15px;height:15px;color:var(--accent)}
+.lb-section>*:not(h3){margin-left:24px;margin-right:24px}
+.lb-section>h3+*{margin-top:20px}
+.lb-section>*:last-child{margin-bottom:22px}
+.doc>.lb-section-wrap,.lb-section-wrap{counter-reset:lbsec}
+
+.lb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.lb-field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:6px;font-weight:600}
+.lb-field input,.lb-field select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--sky);color:var(--ink);font-size:14px;font-family:inherit;transition:.15s}
+.lb-field input:focus,.lb-field select:focus{outline:none;border-color:var(--xd4);background:var(--paper);box-shadow:0 0 0 3px rgba(43,169,224,.12)}
+.lb-field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--sky);color:var(--ink);font-size:14px;line-height:1.55;font-family:inherit;transition:.15s;resize:vertical;min-height:78px}
+.lb-field textarea:focus{outline:none;border-color:var(--xd4);background:var(--paper);box-shadow:0 0 0 3px rgba(43,169,224,.12)}
+.lb-field input[readonly]{color:var(--ink-2);background:var(--sky);cursor:default}
+.lb-field.ro .static{padding:9px 11px;background:var(--sky);border-radius:9px;font-size:14px;color:var(--ink);font-weight:600;border:1px solid var(--line)}
+
+.lb-ops{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lb-op-card{background:var(--sky);border:1px solid var(--sky-line);border-radius:12px;padding:16px}
+.lb-op-card .tag{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--xd4);font-weight:700;margin-bottom:10px}
+.lb-op-card .lb-grid{grid-template-columns:1fr 1fr}
+
+.lb-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--line);box-shadow:inset 0 1px 3px rgba(11,37,69,.04)}
+table.lb-table{width:100%;border-collapse:collapse;min-width:820px}
+table.lb-table thead th{background:linear-gradient(180deg,var(--navy),var(--blue));color:#fff;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;padding:11px 8px;text-align:center;font-weight:600;white-space:nowrap;border-right:1px solid rgba(255,255,255,.08)}
+table.lb-table thead th:last-child{border-right:none}
+table.lb-table tbody td{padding:5px;border-top:1px solid var(--line);border-right:1px solid var(--line);text-align:center;background:var(--paper)}
+table.lb-table tbody td:last-child{border-right:none}
+table.lb-table tbody tr:nth-child(even) td{background:var(--sky)}
+table.lb-table tbody tr:hover td{background:rgba(43,169,224,.06)}
+table.lb-table input,table.lb-table select{width:100%;border:1px solid transparent;background:transparent;text-align:center;padding:7px 4px;border-radius:6px;font-size:13px;color:var(--ink);font-family:'IBM Plex Mono',monospace;transition:.12s}
+table.lb-table input:focus,table.lb-table select:focus{outline:none;border-color:var(--xd4);background:var(--paper);box-shadow:0 0 0 2px rgba(43,169,224,.14)}
+table.lb-table input[readonly]{color:var(--accent);font-variant-numeric:tabular-nums;font-weight:600}
+table.lb-table td.lb-local input{min-width:100px;font-family:'IBM Plex Sans',sans-serif}
+.lb-rowdel{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-3);transition:.15s}
+.lb-rowdel:hover{background:var(--crit-bg);color:var(--crit)}
+.lb-rowdel svg{width:14px;height:14px}
+.lb-sig{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:transparent;transition:.15s;background:var(--paper)}
+.lb-sig.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.lb-sig svg{width:13px;height:13px}
+.lb-addrow{display:flex;align-items:center;gap:7px;margin-top:12px;font-size:13px;font-weight:600;color:var(--xd4);padding:8px 4px}
+.lb-addrow:hover{text-decoration:underline}
+.lb-addrow svg{width:15px;height:15px}
+.lb-tfoot{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px}
+.lb-tfoot .item{text-align:center;background:linear-gradient(180deg,var(--navy),var(--blue));border-radius:11px;padding:14px 12px;position:relative;overflow:hidden}
+.lb-tfoot .item::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--xd4)}
+.lb-tfoot .k{font-size:10px;text-transform:uppercase;color:rgba(198,216,235,.8);letter-spacing:.07em;margin-bottom:6px;font-weight:600}
+.lb-tfoot .v{font-size:24px;font-weight:700;color:#fff;font-family:'IBM Plex Mono',monospace;line-height:1;font-variant-numeric:tabular-nums}
+[data-theme="dark"] .lb-tfoot .v{color:#fff}
+
+.lb-occ textarea{width:calc(100% - 48px);min-height:90px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--sky);color:var(--ink);font-family:inherit;font-size:14px;resize:vertical}
+.lb-occ textarea:focus{outline:none;border-color:var(--xd4);background:var(--paper)}
+
+.lb-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+.lb-save{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,var(--xd4),var(--blue));color:#fff;border:none;border-radius:10px;padding:12px 22px;font-size:14.5px;font-weight:600;box-shadow:0 8px 20px rgba(43,169,224,.28);transition:.15s}
+.lb-save:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.lb-save svg{width:17px;height:17px}
+.lb-print{display:inline-flex;align-items:center;gap:8px;background:var(--sky);color:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:12px 18px;font-size:13.5px;font-weight:600;transition:background .15s,color .15s,box-shadow .15s}
+.lb-print:hover{background:var(--paper);color:var(--ink);box-shadow:var(--shadow)}
+.lb-print svg{width:15px;height:15px}
+.lb-hint{font-size:12px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.lb-hint svg{width:13px;height:13px;flex-shrink:0}
+
+.lb-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 12px 30px rgba(0,0,0,.25);z-index:500;opacity:0;pointer-events:none;transition:.25s}
+.lb-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.lb-toast svg{width:17px;height:17px;color:#3FB98A;flex-shrink:0}
+
+/* ===== RISK ASSESSMENT — chips, pills e medidor de risco ===== */
+.ra-chipgrid{display:flex;flex-wrap:wrap;gap:10px}
+.ra-chip{display:flex;align-items:center;gap:9px;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--sky);font-size:13.5px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:.15s;user-select:none}
+.ra-chip:hover{border-color:var(--accent);color:var(--ink)}
+.ra-chip .box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:transparent;background:var(--paper);flex-shrink:0;transition:.15s}
+.ra-chip .box svg{width:11px;height:11px}
+.ra-chip.on{background:rgba(43,169,224,.10);border-color:var(--xd4);color:var(--ink)}
+.ra-chip.on .box{background:var(--xd4);border-color:var(--xd4);color:#fff}
+.ra-chip.on.hazard{background:var(--warn-bg);border-color:var(--warn)}
+.ra-chip.on.hazard .box{background:var(--warn);border-color:var(--warn)}
+.ra-chip .lbl{white-space:nowrap}
+.ra-chip .ic{width:16px;height:16px;color:var(--ink-3);flex-shrink:0}
+.ra-chip.on .ic{color:var(--xd4)}
+.ra-qual{margin-left:2px;padding:7px 10px;border:1px solid var(--line);border-radius:7px;font-size:12.5px;background:var(--paper);color:var(--ink);width:160px;font-family:inherit}
+.ra-qual:focus{outline:none;border-color:var(--xd4)}
+.ra-outrostxt{margin-top:12px;width:calc(100% - 4px);border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--sky);color:var(--ink);font-family:inherit;font-size:13.5px;resize:vertical;min-height:44px}
+.ra-outrostxt:focus{outline:none;border-color:var(--xd4);background:var(--paper)}
+
+.ra-qa{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid var(--sky-line)}
+.ra-qa:last-child{border-bottom:none}
+.ra-qa .q{font-size:13.5px;color:var(--ink);flex:1;line-height:1.5}
+.ra-qa .q b{color:#fff;background:var(--ink-3);font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:2px 6px;border-radius:5px;margin-right:9px}
+.ra-yn{display:flex;gap:6px;flex-shrink:0}
+.ra-yn button{padding:7px 13px;border-radius:8px;border:1.5px solid var(--line);background:var(--sky);font-size:12px;font-weight:700;color:var(--ink-2);transition:.15s;text-transform:uppercase;letter-spacing:.03em}
+.ra-yn button:hover{border-color:var(--accent)}
+.ra-yn button.sel-sim{background:var(--ok);border-color:var(--ok);color:#fff}
+.ra-yn button.sel-nao{background:var(--crit);border-color:var(--crit);color:#fff}
+.ra-yn button.sel-na{background:var(--ink-3);border-color:var(--ink-3);color:#fff}
+
+.ra-risk{display:flex;align-items:center;gap:16px;padding:16px 20px}
+.ra-risk .badge{display:flex;flex-direction:column;align-items:center;justify-content:center;width:64px;height:64px;border-radius:14px;flex-shrink:0}
+.ra-risk .badge .n{font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1}
+.ra-risk .badge .u{font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;opacity:.8}
+.ra-risk.low .badge{background:var(--ok-bg);color:var(--ok)}
+.ra-risk.med .badge{background:var(--warn-bg);color:var(--warn)}
+.ra-risk.high .badge{background:var(--crit-bg);color:var(--crit)}
+.ra-risk-main{flex:1;min-width:0}
+.ra-risk-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ra-risk-label{font-size:13px;font-weight:700;color:var(--ink)}
+.ra-risk-level{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 10px;border-radius:99px}
+.ra-risk.low .ra-risk-level{background:var(--ok-bg);color:var(--ok)}
+.ra-risk.med .ra-risk-level{background:var(--warn-bg);color:var(--warn)}
+.ra-risk.high .ra-risk-level{background:var(--crit-bg);color:var(--crit)}
+.ra-risk-bar{height:9px;border-radius:99px;background:var(--sky-line);overflow:hidden}
+.ra-risk-bar .fill{height:100%;border-radius:99px;transition:width .35s ease,background .35s ease}
+.ra-risk-hint{font-size:11.5px;color:var(--ink-3);margin-top:7px}
+
+.ra-declare{background:var(--sky);border:1px solid var(--sky-line);border-radius:12px;padding:16px 18px;font-size:13.5px;color:var(--ink-2);line-height:1.7}
+.ra-equiplabel{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;color:var(--accent);background:var(--sky);border:1px solid var(--sky-line);border-radius:99px;padding:3px 10px;text-transform:none;letter-spacing:0}
+.ra-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.ra-steps li{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--sky-line);font-size:13.5px;color:var(--ink)}
+.ra-steps li:last-child{border-bottom:none}
+.ra-steps .n{width:24px;height:24px;border-radius:99px;background:var(--sky);border:1px solid var(--sky-line);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ra-agree{display:flex;align-items:flex-start;gap:11px;margin-top:14px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink);user-select:none}
+.ra-agree .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:transparent;background:var(--paper);flex-shrink:0;margin-top:1px;transition:.15s}
+.ra-agree .box svg{width:12px;height:12px}
+.ra-agree.on .box{background:var(--ok);border-color:var(--ok);color:#fff}
+
+/* subtítulo dentro de uma seção (ex.: "Contato no Local" dentro de "Dados da Missão") */
+.ra-subhead{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin:22px 0 12px;padding-top:16px;border-top:1px solid var(--sky-line)}
+.lb-grid + .ra-subhead{margin-top:20px}
+
+/* grupos de contexto dentro de Verificações Pré-Operacionais (Pessoas/Área/Atmosfera/Equipamentos) */
+.ra-grp + .ra-grp{margin-top:18px}
+.ra-grp-head{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;padding-bottom:8px;border-bottom:1.5px solid var(--sky-line)}
+.ra-grp-head svg{width:15px;height:15px;color:var(--accent);flex-shrink:0}
+
+/* observações da missão */
+.ra-obs{width:100%;min-height:80px;border:1px solid var(--line);border-radius:9px;padding:11px 13px;background:var(--sky);color:var(--ink);font-family:inherit;font-size:13.5px;line-height:1.55;resize:vertical}
+.ra-obs:focus{outline:none;border-color:var(--xd4);background:var(--paper)}
+
+/* status final da operação — 3 botões grandes, um só pode ficar selecionado */
+.ra-status-hint{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin-bottom:12px}
+.ra-status-hint svg{width:15px;height:15px;color:var(--accent);flex-shrink:0}
+.ra-statusgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ra-statusbtn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);cursor:pointer;transition:.15s;font-family:inherit}
+.ra-statusbtn:hover{border-color:var(--accent)}
+.ra-statusbtn .dot{font-size:22px;line-height:1}
+.ra-statusbtn .lbl{font-size:12.5px;font-weight:700;color:var(--ink-2);text-align:center;line-height:1.3}
+.ra-statusbtn.liberada.sel{background:var(--ok-bg);border-color:var(--ok)}
+.ra-statusbtn.restricoes.sel{background:var(--warn-bg);border-color:var(--warn)}
+.ra-statusbtn.nao_liberada.sel{background:var(--crit-bg);border-color:var(--crit)}
+.ra-statusbtn.sel .lbl{color:var(--ink)}
+@media(max-width:640px){ .ra-statusgrid{grid-template-columns:1fr} }
+
+/* ===== ASSINATURA DIGITAL — modal com canvas ===== */
+.lb-sig{overflow:hidden}
+.lb-sig img{display:block}
+.sig-modal-overlay{position:fixed;inset:0;background:rgba(11,37,69,.55);backdrop-filter:blur(2px);z-index:900;opacity:0;pointer-events:none;transition:.2s;overflow-y:auto;padding:24px 0}
+.sig-modal-overlay.show{opacity:1;pointer-events:auto}
+.sig-modal{background:var(--paper);border-radius:16px;box-shadow:var(--shadow-lg);width:min(560px,92vw);padding:20px 22px 22px;transform:translateY(10px);transition:.2s;margin:0 auto}
+.sig-modal-overlay.show .sig-modal{transform:translateY(0)}
+.sig-modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.sig-modal-head h4{font-size:15.5px;font-weight:700;color:var(--ink)}
+.sig-close{width:30px;height:30px;border-radius:8px;font-size:20px;line-height:1;color:var(--ink-3);display:flex;align-items:center;justify-content:center;transition:.15s}
+.sig-close:hover{background:var(--sky);color:var(--ink)}
+.sig-modal-hint{font-size:12.5px;color:var(--ink-3);margin-bottom:12px}
+.sig-canvas-wrap{position:relative;width:100%;height:230px;background:var(--sky);border:1.5px dashed var(--sky-line);border-radius:12px;overflow:hidden;touch-action:none}
+.sig-canvas-wrap canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
+.sig-baseline{position:absolute;left:8%;right:8%;bottom:32%;height:1px;background:var(--line);pointer-events:none}
+.sig-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}
+.sig-btn{padding:10px 16px;border-radius:9px;font-size:13.5px;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+.sig-btn svg{width:14px;height:14px}
+.sig-btn.ghost{background:var(--sky);color:var(--ink-2);border:1px solid var(--line)}
+.sig-btn.ghost:hover{background:var(--paper);color:var(--ink)}
+.sig-btn.primary{background:linear-gradient(135deg,var(--xd4),var(--blue));color:#fff;box-shadow:0 8px 18px rgba(43,169,224,.28)}
+.sig-btn.primary:hover{filter:brightness(1.07)}
+
+
+/* ===== página pública do cliente (sem banner/menu/login) ===== */
+.pubwrap{max-width:960px;margin:0 auto;padding:28px 20px 90px}
+.pubhead{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.pubhead img{width:44px;height:44px;border-radius:10px;background:var(--navy);padding:5px;object-fit:contain;flex-shrink:0}
+.pubhead h2{font-size:15px;color:var(--ink);font-weight:700}
+.pubhead p{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.thankyou{max-width:560px;margin:80px auto;text-align:center;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:42px 32px;box-shadow:var(--shadow)}
+.thankyou .ok-ic{width:64px;height:64px;border-radius:50%;background:var(--ok-bg);color:var(--ok);display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.thankyou .ok-ic svg{width:32px;height:32px}
+.thankyou h1{font-size:20px;color:var(--ink);margin-bottom:8px}
+.thankyou p{font-size:14px;color:var(--ink-2);line-height:1.6}
+.thankyou button{margin-top:22px;background:var(--sky);color:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:11px 20px;font-size:13.5px;font-weight:600}
+.thankyou button:hover{background:var(--paper);color:var(--ink)}
+#raRootWrap.hidden,#thankYouWrap.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div id="raRootWrap">
+  <div class="pubwrap">
+    <div class="pubhead">
+      <img id="pubLogo" alt="XD4">
+      <div>
+        <h2>XD4 Solutions — Risk Assessment</h2>
+        <p>Preencha as informações abaixo antes do início da operação. Ao enviar, o formulário é salvo automaticamente no Google Drive da XD4Solutions.</p>
+      </div>
+    </div>
+    <div id="viewDoc"></div>
+  </div>
+</div>
+
+<div id="thankYouWrap" class="hidden">
+  <div class="thankyou">
+    <div class="ok-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
+    <h1>Risk Assessment enviado!</h1>
+    <p>Recebemos as informações e o registro já foi salvo no Google Drive da XD4Solutions. Obrigado por preencher.</p>
+    <button onclick="raRestart()">Preencher um novo Risk Assessment</button>
+  </div>
+</div>
+
+<script>
+const viewDoc = document.getElementById('viewDoc');
+const XD4_SYMBOL='data:image/png;base64,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';
+
+const IC = {
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h13a2 2 0 012 2v14a2 2 0 00-2-2H4z"/><path d="M4 4v14"/></svg>',
+  wrench:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.5 2.5-2.5-.6-.6-2.5z"/></svg>',
+  drone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/><path d="M7 7l2 2M17 7l-2 2M7 17l2-2M17 17l-2-2"/></svg>',
+  robot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="8" width="14" height="10" rx="2"/><circle cx="9" cy="13" r="1.3"/><circle cx="15" cy="13" r="1.3"/><path d="M12 8V4M9 4h6M4 12v3M20 12v3"/></svg>',
+  fleet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 11l1.4-4.2A2 2 0 018.3 5.5h7.4a2 2 0 011.9 1.3L19 11"/><rect x="3" y="11" width="18" height="6" rx="2"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7.5l9-4 9 4-9 4-9-4z"/><path d="M3 7.5v9l9 4 9-4v-9"/><path d="M12 11.5v9"/></svg>',
+  mountain:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20L9 8l4 6 3-4 5 10z"/><circle cx="7.5" cy="6" r="1.4"/></svg>',
+  flame:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2c0 4.5-5 5.5-5 10.5a5 5 0 0010 0c0-3-2-4-2-7-1 2-3 2-3-3.5z"/></svg>',
+  leaf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21c9 0 14-5 14-14V5h-2C8 5 5 12 5 21z"/><path d="M5 21c3-6 7-9 12-11"/></svg>',
+  bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>',
+  factory:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V10l5 3.2V10l5 3.2V8l5 3v10z"/><path d="M3 21h17"/><path d="M8 21v-4M13 21v-4"/></svg>',
+  pipe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h11a4 4 0 010 8H5"/><circle cx="4" cy="8" r="2"/><circle cx="5" cy="16" r="2"/></svg>',
+  tower:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 2h6l-1 4h2l-3 16-3-16h2z"/><path d="M7 9h10M6 13h12"/></svg>',
+  droplet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3s6 7.2 6 11.2a6 6 0 01-12 0C6 10.2 12 3 12 3z"/></svg>',
+  folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>',
+  file:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M13 2v7h7"/></svg>',
+  pdf:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M13 2v7h7"/><path d="M8 15h1.5a1 1 0 000-2H8v4"/></svg>',
+  grad:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>',
+   pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.8 5.7 21l2.3-7.1-6-4.5h7.6z"/></svg>',
+   org:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v5M5 17v-2h14v2M12 12v3"/></svg>',
+   user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>',
+   shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 3v6c0 5-3.4 9-8 11-4.6-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></svg>',
+   pilot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><path d="M8.5 5.5C10 3 14 3 15.5 5.5"/></svg>',
+   star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.5 6.5H21l-5.2 4 2 6.5L12 16.5 6.2 20l2-6.5L3 9.5h6.5z"/></svg>',
+   checklist:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 2h6v3H9z"/><path d="M8 12l2 2 4-4M8 17l2 2 4-4"/></svg>'
+};
+
+/* ================================================================
+   ASSINATURA DIGITAL — pad de assinatura (dedo, caneta/stylus, mouse)
+   Usado no Risk Assessment e nas rubricas do Diário de Bordo/Manutenção.
+   ================================================================ */
+const SIG_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>';
+let SIG_CALLBACK=null, SIG_DRAWING=false, SIG_HASDRAWN=false, SIG_CTX=null, SIG_LAST=null;
+
+function sigMark(val){
+  // val pode ser: false/undefined (não assinado), true (dado legado sem imagem),
+  // ou uma dataURL 'data:image/png;...' (assinatura real capturada no pad).
+  if(!val) return '';
+  if(typeof val==='string' && val.indexOf('data:image')===0) return `<img src="${val}" alt="assinatura" style="width:100%;height:100%;object-fit:contain">`;
+  return SIG_CHECK;
+}
+
+function ensureSigModal(){
+  if(document.getElementById('sigModalOverlay')) return;
+  const div=document.createElement('div');
+  div.id='sigModalOverlay';
+  div.className='sig-modal-overlay';
+  div.innerHTML=`
+    <div class="sig-modal">
+      <div class="sig-modal-head">
+        <h4 id="sigModalTitle">Assinatura Digital</h4>
+        <button class="sig-close" onclick="closeSignaturePad()" type="button" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="sig-modal-hint">Assine com o dedo ou a caneta do tablet no espaço abaixo.</div>
+      <div class="sig-canvas-wrap"><canvas id="sigCanvas"></canvas><div class="sig-baseline"></div></div>
+      <div class="sig-modal-actions">
+        <button class="sig-btn ghost" onclick="clearSignaturePad()" type="button">Limpar</button>
+        <button class="sig-btn ghost" onclick="closeSignaturePad()" type="button">Cancelar</button>
+        <button class="sig-btn primary" onclick="confirmSignaturePad()" type="button">${SIG_CHECK}Confirmar assinatura</button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+  setupSigCanvas();
+  div.addEventListener('click', e=>{ if(e.target===div) closeSignaturePad(); });
+}
+
+function setupSigCanvas(){
+  const canvas=document.getElementById('sigCanvas');
+  const wrap=canvas.parentElement;
+  function resize(){
+    const rect=wrap.getBoundingClientRect();
+    const dpr=window.devicePixelRatio||1;
+    const prevData = canvas.width ? canvas.toDataURL('image/png') : null;
+    canvas.width=Math.max(1,rect.width*dpr);
+    canvas.height=Math.max(1,rect.height*dpr);
+    canvas.style.width=rect.width+'px';
+    canvas.style.height=rect.height+'px';
+    const ctx=canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    ctx.lineWidth=2.6;
+    ctx.lineCap='round';
+    ctx.lineJoin='round';
+    ctx.strokeStyle=(getComputedStyle(document.documentElement).getPropertyValue('--ink')||'#1A2432').trim();
+    SIG_CTX=ctx;
+  }
+  resize();
+  window.addEventListener('resize', ()=>{
+    const ov=document.getElementById('sigModalOverlay');
+    if(ov && ov.classList.contains('show')) resize();
+  });
+  function pos(e){
+    const rect=canvas.getBoundingClientRect();
+    return {x:e.clientX-rect.left, y:e.clientY-rect.top};
+  }
+  canvas.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    try{ canvas.setPointerCapture(e.pointerId); }catch(_e){}
+    SIG_DRAWING=true; SIG_HASDRAWN=true;
+    SIG_LAST=pos(e);
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!SIG_DRAWING) return;
+    e.preventDefault();
+    const p=pos(e);
+    SIG_CTX.beginPath();
+    SIG_CTX.moveTo(SIG_LAST.x,SIG_LAST.y);
+    SIG_CTX.lineTo(p.x,p.y);
+    SIG_CTX.stroke();
+    SIG_LAST=p;
+  });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>canvas.addEventListener(ev, ()=>{ SIG_DRAWING=false; }));
+  canvas.style.touchAction='none';
+}
+
+/* title: texto do cabeçalho do modal · onConfirm: function(dataUrl) chamada ao confirmar */
+function openSignaturePad(title, onConfirm){
+  ensureSigModal();
+  document.getElementById('sigModalTitle').textContent=title||'Assinatura Digital';
+  clearSignaturePad();
+  SIG_CALLBACK=onConfirm;
+  document.getElementById('sigModalOverlay').classList.add('show');
+}
+function closeSignaturePad(){
+  const o=document.getElementById('sigModalOverlay');
+  if(o) o.classList.remove('show');
+  SIG_CALLBACK=null;
+}
+function clearSignaturePad(){
+  const canvas=document.getElementById('sigCanvas');
+  if(!canvas||!SIG_CTX) return;
+  const dpr=window.devicePixelRatio||1;
+  SIG_CTX.clearRect(0,0,canvas.width/dpr,canvas.height/dpr);
+  SIG_HASDRAWN=false;
+}
+function confirmSignaturePad(){
+  if(!SIG_HASDRAWN){ closeSignaturePad(); return; }
+  const canvas=document.getElementById('sigCanvas');
+  const dataUrl=canvas.toDataURL('image/png');
+  const cb=SIG_CALLBACK;
+  closeSignaturePad();
+  if(cb) cb(dataUrl);
+}
+
+
+
+/* ---------- integração com Google Drive (mesmo endpoint do painel interno) ---------- */
+const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzNKFyOG9RUDXlZ4AhO--rOXhfu5bYCLmlKPyq--ERFhKHFlDArwTEQtmAhO3uabr9XBQ/exec";
+
+const LAST_PDF_URL = {};
+async function sendToDrive(kind, payload, extra){
+  if(!GAS_ENDPOINT){ return {ok:false, reason:'not_configured'}; }
+  const fetchPromise = (async () => {
+    const res = await fetch(GAS_ENDPOINT, {
+      method:'POST',
+      redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // evita preflight OPTIONS, que o Apps Script não trata
+      body: JSON.stringify(Object.assign({ kind, savedAt: new Date().toISOString(), payload }, extra||{}))
+    });
+    const text = await res.text();
+    let json = null;
+    try{ json = JSON.parse(text); }catch(_e){ /* resposta não era JSON */ }
+    if(!res.ok){
+      console.error('Google Drive respondeu com erro HTTP', res.status, text);
+      return {ok:false, reason:'http_error', status:res.status, raw:text};
+    }
+    if(json && json.ok === false){
+      console.error('Google Apps Script retornou erro:', json);
+      return {ok:false, reason:'script_error', raw:json};
+    }
+    return {ok:true, data:json};
+  })();
+
+  // Mesmo se o timeout "vencer" a corrida abaixo, quando a resposta real do Google
+  // chegar (em segundo plano) capturamos o link do PDF pra o botão de exportar funcionar.
+  fetchPromise.then(realResult => {
+    if(realResult && realResult.ok && realResult.data && realResult.data.pdfUrl){
+      if(kind === 'diario_bordo') LAST_PDF_URL.diarios = realResult.data.pdfUrl;
+      if(kind === 'diario_manutencao') LAST_PDF_URL['diarios-manut'] = realResult.data.pdfUrl;
+      if(kind === 'risk_assessment') LAST_PDF_URL['risk-assessment'] = realResult.data.pdfUrl;
+    }
+  }).catch(()=>{ /* já tratado no caminho principal; aqui é só best-effort */ });
+
+  // Timeout de segurança: a resposta do Apps Script às vezes fica "pendurada" no navegador
+  // (redirecionamento do Google) mesmo já tendo sido processada do lado do servidor.
+  // Sem isso, o painel nunca avisa nada — com isso, ele sempre responde em até 6s.
+  const timeoutPromise = new Promise(resolve => {
+    setTimeout(() => resolve({ok:true, reason:'timeout_assumed_ok', data:null}), 6000);
+  });
+
+  try{
+    return await Promise.race([fetchPromise, timeoutPromise]);
+  }catch(e){
+    console.error('Falha de rede ao enviar para o Google Drive:', e);
+    return {ok:false, reason:'network_error', error:String(e)};
+  }
+}
+
+
+const RA_EQUIP_ITEMS = [
+  { key:'elios3', label:'Elios 3', icon:'drone' },
+  { key:'elios2', label:'Elios 2', icon:'drone' },
+  { key:'go2', label:'Unitree GO2', icon:'robot' },
+  { key:'go2wheels', label:'Unitree GO2 Wheels', icon:'robot' },
+  { key:'g1', label:'Unitree G1', icon:'robot' },
+  { key:'rover', label:'Rover', icon:'robot' },
+  { key:'outro', label:'Outro equipamento', icon:'box', qual:true }
+];
+const RA_LOCAL_ITEMS = [
+  { key:'confinada', label:'Área confinada' },
+  { key:'agua', label:'Presença de água' },
+  { key:'poeira', label:'Presença de poeira' },
+  { key:'ultrapassarGaiola', label:'Elementos que podem atingir o equipamento' },
+  { key:'cairSobre', label:'Elementos que podem cair sobre o equipamento' },
+  { key:'ambienteExplosivo', label:'Ambiente explosivo' },
+  { key:'ventos', label:'Ventos acima de 7 m/s' }
+];
+const RA_SUBST_ITEMS = [
+  { key:'toxico', label:'Tóxico' },
+  { key:'nocivo', label:'Nocivo ou irritante' },
+  { key:'corrosivo', label:'Corrosivo' },
+  { key:'comburente', label:'Material comburente' },
+  { key:'explosivo', label:'Explosivo' },
+  { key:'biologico', label:'Material biológico' }
+];
+const RA_EPI_ITEMS = [
+  { key:'capacete', label:'Capacete' },
+  { key:'oculos', label:'Óculos de proteção' },
+  { key:'protetorAuditivo', label:'Protetor auditivo' },
+  { key:'luvas', label:'Luvas' },
+  { key:'calcado', label:'Calçado de segurança' },
+  { key:'macacao', label:'Macacão' },
+  { key:'altaVisibilidade', label:'Alta visibilidade' }
+];
+/* Controles mitigatórios adotados pra reduzir o risco identificado.
+   Fica registrado no mesmo documento, logo antes do status final —
+   é o que justifica a classificação de "liberada com restrições". */
+const RA_CONTROLES_ITEMS = [
+  { key:'areaIsolada', label:'Área isolada' },
+  { key:'vigiaExterno', label:'Vigia externo' },
+  { key:'detectorGases', label:'Detector de gases' },
+  { key:'permissaoTrabalho', label:'Permissão de Trabalho' },
+  { key:'linhaVida', label:'Linha de vida' },
+  { key:'monitoramentoContinuo', label:'Monitoramento contínuo' }
+];
+
+/* Verificações Pré-Operacionais muda conforme o equipamento selecionado em
+   "Equipamento". Elios 3 e Elios 2 usam o checklist original (o mesmo de
+   sempre). GO2, GO2-W, G1 e Rover têm listas próprias, adaptadas às
+   características reais de cada plataforma (faixa de temperatura, terreno,
+   mobilidade). Cada pergunta pertence a um grupo (grp) — Pessoas, Área,
+   Atmosfera ou Equipamentos — pra facilitar a leitura em campo.
+   Todas as perguntas seguem a mesma lógica: SIM = condição segura,
+   NÃO = ponto de atenção. Nenhuma pergunta é invertida.
+   Fontes: manual de operação Unitree GO2 (faixa 5–35°C, evitar gelo/piso
+   escorregadio), datasheet Unitree GO2-W (obstáculos até 70cm, rampa até
+   35°), specs públicas Unitree G1 (sem IP declarado — tratado como uso
+   preferencialmente coberto). Não encontrei especificações públicas para
+   o "Rover" — os itens de piso/temperatura desse ficaram genéricos de
+   propósito, em vez de inventar um número. */
+const RA_ASPECTOS_ELIOS = [
+  { grp:'pessoas', q:'Piloto e observador treinados para esta operação?' },
+  { grp:'pessoas', q:'Equipe do local informada sobre a atividade?' },
+  { grp:'area', q:'Área isolada e sinalizada?' },
+  { grp:'area', q:'Inflamáveis e resíduos oleosos removidos do local?' },
+  { grp:'area', q:'Materiais inflamáveis remanescentes protegidos contra calor?' },
+  { grp:'area', q:'Acesso ao local liberado, sem obstáculos?' },
+  { grp:'area', q:'Ativo preparado para a inspeção (limpo, sem pó em suspensão)?' },
+  { grp:'atmosfera', q:'Atmosfera explosiva controlada?' },
+  { grp:'atmosfera', q:'Medição de gás realizada?' },
+  { grp:'atmosfera', q:'Temperatura do local entre 0°C e 40°C?' },
+  { grp:'equipamentos', q:'Extintores e hidrantes disponíveis e acessíveis?' },
+  { grp:'equipamentos', q:'Recipientes e tubulações purgados de líquido/vapor inflamável?' }
+];
+const RA_ASPECTOS_GO2 = [
+  { grp:'pessoas', q:'Equipe treinada para operação com o robô?' },
+  { grp:'pessoas', q:'Equipe do local informada sobre a atividade?' },
+  { grp:'area', q:'Área isolada e sinalizada?' },
+  { grp:'area', q:'Inflamáveis e resíduos oleosos removidos do trajeto?' },
+  { grp:'area', q:'Materiais inflamáveis remanescentes protegidos contra calor?' },
+  { grp:'area', q:'Piso livre de gelo, lama ou superfícies escorregadias?' },
+  { grp:'area', q:'Trajeto livre de obstáculos e rampas acima de 30°?' },
+  { grp:'atmosfera', q:'Atmosfera explosiva controlada?' },
+  { grp:'atmosfera', q:'Medição de gás realizada?' },
+  { grp:'atmosfera', q:'Temperatura do local entre 5°C e 35°C (faixa operacional do GO2)?' },
+  { grp:'equipamentos', q:'Extintores e hidrantes disponíveis e acessíveis?' },
+  { grp:'equipamentos', q:'Recipientes e tubulações purgados de líquido/vapor inflamável?' }
+];
+const RA_ASPECTOS_GO2W = [
+  { grp:'pessoas', q:'Equipe treinada para operação com o robô?' },
+  { grp:'pessoas', q:'Equipe do local informada sobre a atividade?' },
+  { grp:'area', q:'Área isolada e sinalizada?' },
+  { grp:'area', q:'Inflamáveis e resíduos oleosos removidos do trajeto?' },
+  { grp:'area', q:'Materiais inflamáveis remanescentes protegidos contra calor?' },
+  { grp:'area', q:'Piso livre de gelo, lama ou superfícies escorregadias?' },
+  { grp:'area', q:'Trajeto livre de obstáculos acima de 70cm ou rampas acima de 35°?' },
+  { grp:'atmosfera', q:'Atmosfera explosiva controlada?' },
+  { grp:'atmosfera', q:'Medição de gás realizada?' },
+  { grp:'atmosfera', q:'Temperatura do local entre 5°C e 35°C (faixa operacional do GO2-W)?' },
+  { grp:'equipamentos', q:'Extintores e hidrantes disponíveis e acessíveis?' },
+  { grp:'equipamentos', q:'Recipientes e tubulações purgados de líquido/vapor inflamável?' }
+];
+const RA_ASPECTOS_G1 = [
+  { grp:'pessoas', q:'Equipe treinada para operação com o robô?' },
+  { grp:'pessoas', q:'Equipe do local informada sobre a atividade?' },
+  { grp:'area', q:'Área isolada e sinalizada?' },
+  { grp:'area', q:'Inflamáveis e resíduos oleosos removidos do trajeto?' },
+  { grp:'area', q:'Materiais inflamáveis remanescentes protegidos contra calor?' },
+  { grp:'area', q:'Piso plano e livre de obstáculos para caminhada bípede?' },
+  { grp:'area', q:'Local protegido de chuva, poeira e umidade excessiva?' },
+  { grp:'atmosfera', q:'Atmosfera explosiva controlada?' },
+  { grp:'atmosfera', q:'Medição de gás realizada?' },
+  { grp:'atmosfera', q:'Temperatura dentro da faixa segura de operação do equipamento?' },
+  { grp:'equipamentos', q:'Extintores e hidrantes disponíveis e acessíveis?' },
+  { grp:'equipamentos', q:'Recipientes e tubulações purgados de líquido/vapor inflamável?' }
+];
+const RA_ASPECTOS_ROVER = [
+  { grp:'pessoas', q:'Equipe treinada para operação com o equipamento?' },
+  { grp:'pessoas', q:'Equipe do local informada sobre a atividade?' },
+  { grp:'area', q:'Área isolada e sinalizada?' },
+  { grp:'area', q:'Inflamáveis e resíduos oleosos removidos do trajeto?' },
+  { grp:'area', q:'Materiais inflamáveis remanescentes protegidos contra calor?' },
+  { grp:'area', q:'Trajeto livre de obstáculos e buracos?' },
+  { grp:'area', q:'Piso adequado para tração das rodas?' },
+  { grp:'atmosfera', q:'Atmosfera explosiva controlada?' },
+  { grp:'atmosfera', q:'Medição de gás realizada?' },
+  { grp:'atmosfera', q:'Temperatura dentro da faixa segura de operação do equipamento?' },
+  { grp:'equipamentos', q:'Extintores e hidrantes disponíveis e acessíveis?' },
+  { grp:'equipamentos', q:'Recipientes e tubulações purgados de líquido/vapor inflamável?' }
+];
+const RA_ASPECTOS_POR_EQUIP = {
+  elios3: RA_ASPECTOS_ELIOS,
+  elios2: RA_ASPECTOS_ELIOS,
+  go2: RA_ASPECTOS_GO2,
+  go2wheels: RA_ASPECTOS_GO2W,
+  g1: RA_ASPECTOS_G1,
+  rover: RA_ASPECTOS_ROVER
+};
+const RA_ASPECTOS_GRUPOS = [
+  { key:'pessoas', label:'Pessoas', icon:'shield' },
+  { key:'area', label:'Área', icon:'file' },
+  { key:'atmosfera', label:'Atmosfera', icon:'droplet' },
+  { key:'equipamentos', label:'Equipamentos', icon:'wrench' }
+];
+/* qual equipamento manda no checklist agora: o primeiro marcado, na ordem
+   da lista de equipamentos (RA_EQUIP_ITEMS). Nenhum marcado ainda → Elios 3. */
+function raActiveEquipKey(){
+  const found = RA_EQUIP_ITEMS.find(it=>it.key!=='outro' && RA_STATE.equip[it.key]);
+  return found ? found.key : 'elios3';
+}
+function raActiveAspectos(){
+  return RA_ASPECTOS_POR_EQUIP[raActiveEquipKey()] || RA_ASPECTOS_ELIOS;
+}
+
+/* Plano de Recuperação do Equipamento — avalia o PLANEJAMENTO da
+   recuperação (não um acidente que já aconteceu). Todas as perguntas
+   seguem a mesma lógica: SIM = condição segura. */
+const RA_RECUPERACAO = [
+  'Existe estratégia definida para recuperação do equipamento?',
+  'A recuperação pode ser realizada com segurança?',
+  'Equipamento pode permanecer no local sem sofrer danos, caso não seja recuperado de imediato?',
+  'Ativo permanece protegido, caso o equipamento não seja recuperado de imediato?'
+];
+const RA_ACIDENTE_STEPS = [
+  'Isolar a área e registrar fotos do local.',
+  'Suspender a operação imediatamente.',
+  'Comunicar o Chefe de Operações.',
+  'Preencher relatório pós acidente.',
+  'Recolher o equipamento e catalogar danos.'
+];
+const RA_STATUS_OPTS = [
+  { key:'liberada', label:'Operação Liberada', dot:'🟢', color:'var(--ok)' },
+  { key:'restricoes', label:'Liberada com Restrições', dot:'🟡', color:'var(--warn)' },
+  { key:'nao_liberada', label:'Operação Não Liberada', dot:'🔴', color:'var(--crit)' }
+];
+
+function raDefaultState(){
+  return {
+    dataMissao:'', cliente:'', proposta:'', ordemServico:'', localAtivo:'', descAtivo:'',
+    contatoNome:'', contatoTelefone:'', contatoFuncao:'',
+    equip:{elios3:false,elios2:false,go2:false,go2wheels:false,g1:false,rover:false,outro:false,outroQual:''},
+    local:{confinada:false,agua:false,poeira:false,ultrapassarGaiola:false,cairSobre:false,ambienteExplosivo:false,ventos:false,outros:false,outrosDesc:''},
+    subst:{toxico:false,nocivo:false,corrosivo:false,comburente:false,explosivo:false,biologico:false,outros:false,outrosDesc:''},
+    epi:{capacete:false,oculos:false,protetorAuditivo:false,luvas:false,calcado:false,macacao:false,altaVisibilidade:false,outros:false,outrosDesc:''},
+    aspectos:RA_ASPECTOS_ELIOS.map(()=>''), aspectosEquipKey:'elios3',
+    recuperacao:RA_RECUPERACAO.map(()=>''),
+    controles:{areaIsolada:false,vigiaExterno:false,detectorGases:false,permissaoTrabalho:false,linhaVida:false,monitoramentoContinuo:false,outros:false,outrosDesc:''},
+    observacoes:'',
+    statusFinal:'',
+    agree:false, declLocal:'', declData:'', declNome:'', assinaturaImg:null
+  };
+}
+
+function renderRiskAssessment(){
+  RA_STATE = raDefaultState();
+
+  viewDoc.innerHTML = `
+  <div class="doc lb-section-wrap" style="max-width:900px;margin:0 auto">
+    <div class="lb-head">
+      <div class="lb-head-main">
+        <div class="lb-ic">${IC.shield}</div>
+        <div>
+          <h1>Risk Assessment</h1>
+          <div class="lb-sub">Avaliação de risco antes da missão.</div>
+          <div class="lb-docmeta">
+            <span class="lb-chip">DOC <b>FO-OPE-002</b></span>
+            <span class="lb-chip">REV <b>01</b></span>
+            <span class="lb-chip">RISK ASSESSMENT</span>
+          </div>
+        </div>
+        <div class="lb-status" id="raStatus"><span class="d"></span><span id="raStatusText">Rascunho não salvo</span></div>
+      </div>
+      <div class="lb-tailstrip">
+        <div class="cell"><div class="k">Cliente</div><div class="v" id="raTailCliente">—</div></div>
+        <div class="cell"><div class="k">Data da Missão</div><div class="v" id="raTailData">${RA_STATE.dataMissao}</div></div>
+        <div class="cell"><div class="k">Local do Ativo</div><div class="v" id="raTailLocal">—</div></div>
+        <div class="cell"><div class="k">Equipamento</div><div class="v" id="raTailEquip">—</div></div>
+      </div>
+    </div>
+
+    <div class="lb-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>Dados da Missão</h3>
+      <div class="lb-grid">
+        <div class="lb-field"><label>Data da Missão</label><input id="raDataMissao" type="date" value="${RA_STATE.dataMissao}" onchange="raSyncField('dataMissao',this.value)"></div>
+        <div class="lb-field"><label>Cliente / Empresa</label><input id="raCliente" placeholder="Nome do cliente" onchange="raSyncField('cliente',this.value)"></div>
+        <div class="lb-field"><label>Proposta Comercial</label><input id="raProposta" onchange="raSyncField('proposta',this.value)"></div>
+        <div class="lb-field"><label>Ordem de Serviço</label><input id="raOrdemServico" onchange="raSyncField('ordemServico',this.value)"></div>
+        <div class="lb-field"><label>Local do Ativo</label><input id="raLocalAtivo" onchange="raSyncField('localAtivo',this.value)"></div>
+        <div class="lb-field"><label>Descrição do Ativo</label><input id="raDescAtivo" onchange="raSyncField('descAtivo',this.value)"></div>
+      </div>
+      <div class="ra-subhead">Contato no Local</div>
+      <div class="lb-grid">
+        <div class="lb-field"><label>Nome</label><input id="raContatoNome" onchange="raSyncField('contatoNome',this.value)"></div>
+        <div class="lb-field"><label>Telefone</label><input id="raContatoTelefone" placeholder="(00) 00000-0000" onchange="raSyncField('contatoTelefone',this.value)"></div>
+        <div class="lb-field"><label>Função</label><input id="raContatoFuncao" onchange="raSyncField('contatoFuncao',this.value)"></div>
+      </div>
+    </div>
+
+    <div class="lb-section">
+      <h3>${IC.drone}Equipamento</h3>
+      <div id="raEquipBody"></div>
+    </div>
+
+    <div class="lb-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17a2 2 0 001.7 3h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Riscos do Local</h3>
+      <div id="raLocalBody"></div>
+    </div>
+
+    <div class="lb-section">
+      <h3>${IC.droplet}Substâncias Perigosas</h3>
+      <div id="raSubstBody"></div>
+      <div class="lb-hint" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Anexar FISPQ, se aplicável.</div>
+    </div>
+
+    <div class="lb-section">
+      <h3>${IC.shield}EPIs Obrigatórios</h3>
+      <div id="raEpiBody"></div>
+    </div>
+
+    <div class="lb-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4M12 3l8 4v5c0 5-3.5 9-8 10-4.5-1-8-5-8-10V7l8-4z"/></svg>Verificações Pré-Operacionais<span class="ra-equiplabel" id="raAspectosEquipLabel"></span></h3>
+      <div id="raAspectosBody"></div>
+    </div>
+
+    <div class="lb-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>Plano de Recuperação do Equipamento</h3>
+      <div id="raRecupBody"></div>
+    </div>
+
+    <div class="lb-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Procedimento em Caso de Acidente</h3>
+      <ol class="ra-steps">${RA_ACIDENTE_STEPS.map((s,i)=>`<li><span class="n">${i+1}</span>${s}</li>`).join('')}</ol>
+    </div>
+
+    <div class="lb-section">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Aprovação da Operação</h3>
+
+      <div class="ra-subhead">Controles Mitigatórios Adotados</div>
+      <div id="raControlesBody"></div>
+
+      <div class="ra-subhead" style="margin-top:20px">Observações da Missão</div>
+      <textarea class="ra-obs" id="raObservacoes" placeholder="Exceções, condições específicas do local ou combinados com o cliente…" onchange="raSyncField('observacoes',this.value)">${RA_STATE.observacoes}</textarea>
+
+      <div class="ra-subhead" style="margin-top:20px">Status da Operação</div>
+      <div class="ra-status-hint" id="raStatusSuggestion"></div>
+      <div id="raStatusBody"></div>
+
+      <div class="ra-subhead" style="margin-top:20px">Declaração Final</div>
+      <div class="ra-declare">
+        Confirmo que os riscos conhecidos desta operação foram avaliados, que os controles mitigatórios necessários foram implementados, e que a operação está autorizada conforme a classificação de status definida acima.
+      </div>
+      <div class="ra-agree" id="raAgree" onclick="raToggleAgree()"><div class="box">${RA_ICOK}</div><span>Li e estou de acordo com a declaração acima</span></div>
+      <div class="lb-grid" style="margin-top:16px">
+        <div class="lb-field"><label>Local</label><input id="raDeclLocal" onchange="raSyncField('declLocal',this.value)"></div>
+        <div class="lb-field"><label>Data</label><input id="raDeclData" type="date" value="${RA_STATE.declData}" onchange="raSyncField('declData',this.value)"></div>
+        <div class="lb-field"><label>Nome</label><input id="raDeclNome" onchange="raSyncField('declNome',this.value)"></div>
+      </div>
+      <div class="ra-sig-block">
+        <label>Assinatura</label>
+        <div class="ra-sig-pad" id="raSigPad" onclick="raOpenSig()"></div>
+      </div>
+    </div>
+
+    <div class="lb-section">
+      <div class="lb-actions">
+        <button class="lb-save" onclick="raSave()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Enviar Risk Assessment</button>
+        <button class="lb-print" onclick="raExportReport()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>Baixar uma cópia em PDF</button>
+        <span class="lb-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Ao enviar, este formulário é salvo automaticamente no Google Drive da XD4Solutions.</span>
+      </div>
+    </div>
+  </div>
+  <div class="lb-toast" id="raToast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg><span id="raToastText">Salvo</span></div>
+  `;
+
+  raRenderEquip();
+  raRenderLocal();
+  raRenderSubst();
+  raRenderEpi();
+  raRenderAspectos();
+  raRenderRecuperacao();
+  raRenderControles();
+  raRenderStatus();
+  raRenderSigPad();
+}
+
+
+function raChipHTML(group, item, checked, qualVal, hazardStyle){
+  const qual = item.qual ? `<input class="ra-qual" placeholder="Qual?" value="${qualVal||''}" onclick="event.stopPropagation()" onchange="raSetQual('${group}','${item.key}Qual',this.value)">` : '';
+  return `<div class="ra-chip ${checked?'on':''} ${hazardStyle&&checked?'hazard':''}" onclick="raToggleChip('${group}','${item.key}')">
+    <span class="box">${RA_ICOK}</span>
+    ${item.icon?`<span class="ic">${IC[item.icon]||IC.file}</span>`:''}
+    <span class="lbl">${item.label}</span>
+  </div>${checked?qual:''}`;
+}
+function raOutrosChipHTML(group, checked, val, hazardStyle){
+  return `<div class="ra-chip ${checked?'on':''} ${hazardStyle&&checked?'hazard':''}" onclick="raToggleChip('${group}','outros')">
+    <span class="box">${RA_ICOK}</span><span class="lbl">Outros</span>
+  </div>` + (checked?`<textarea class="ra-outrostxt" placeholder="Descreva…" onchange="raSetQual('${group}','outrosDesc',this.value)">${val||''}</textarea>`:'');
+}
+
+function raRenderEquip(){
+  const box = document.getElementById('raEquipBody'); if(!box) return;
+  const e = RA_STATE.equip;
+  box.innerHTML = `<div class="ra-chipgrid">${RA_EQUIP_ITEMS.map(it=>raChipHTML('equip', it, e[it.key], e[it.key+'Qual'], false)).join('')}</div>`;
+  raUpdateTailstrip();
+}
+function raRenderLocal(){
+  const box = document.getElementById('raLocalBody'); if(!box) return;
+  const l = RA_STATE.local;
+  box.innerHTML = `<div class="ra-chipgrid">${RA_LOCAL_ITEMS.map(it=>raChipHTML('local', it, l[it.key], null, true)).join('')}${raOutrosChipHTML('local', l.outros, l.outrosDesc, true)}</div>`;
+}
+function raRenderSubst(){
+  const box = document.getElementById('raSubstBody'); if(!box) return;
+  const s = RA_STATE.subst;
+  box.innerHTML = `<div class="ra-chipgrid">${RA_SUBST_ITEMS.map(it=>raChipHTML('subst', it, s[it.key], null, true)).join('')}${raOutrosChipHTML('subst', s.outros, s.outrosDesc, true)}</div>`;
+}
+function raRenderEpi(){
+  const box = document.getElementById('raEpiBody'); if(!box) return;
+  const p = RA_STATE.epi;
+  box.innerHTML = `<div class="ra-chipgrid">${RA_EPI_ITEMS.map(it=>raChipHTML('epi', it, p[it.key], null, false)).join('')}${raOutrosChipHTML('epi', p.outros, p.outrosDesc, false)}</div>`;
+}
+function raRenderAspectos(){
+  const box = document.getElementById('raAspectosBody'); if(!box) return;
+  const activeKey = raActiveEquipKey();
+  const list = raActiveAspectos();
+  if(RA_STATE.aspectosEquipKey !== activeKey){
+    RA_STATE.aspectosEquipKey = activeKey;
+    RA_STATE.aspectos = list.map(()=>'');
+  }
+  const label = document.getElementById('raAspectosEquipLabel');
+  if(label){ const it = RA_EQUIP_ITEMS.find(e=>e.key===activeKey); label.textContent = it ? it.label : ''; }
+  box.innerHTML = RA_ASPECTOS_GRUPOS.map(g=>{
+    const rows = list.map((item,i)=>({item,i})).filter(x=>x.item.grp===g.key).map(({item,i})=>`<div class="ra-qa">
+      <div class="q">${item.q}</div>
+      <div class="ra-yn">
+        <button class="${RA_STATE.aspectos[i]==='sim'?'sel-sim':''}" onclick="raSetChoice('aspectos',${i},'sim')">Sim</button>
+        <button class="${RA_STATE.aspectos[i]==='nao'?'sel-nao':''}" onclick="raSetChoice('aspectos',${i},'nao')">Não</button>
+        <button class="${RA_STATE.aspectos[i]==='na'?'sel-na':''}" onclick="raSetChoice('aspectos',${i},'na')">N/A</button>
+      </div>
+    </div>`).join('');
+    if(!rows) return '';
+    return `<div class="ra-grp">
+      <div class="ra-grp-head">${IC[g.icon]||''}<span>${g.label}</span></div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+function raRenderRecuperacao(){
+  const box = document.getElementById('raRecupBody'); if(!box) return;
+  box.innerHTML = RA_RECUPERACAO.map((q,i)=>`<div class="ra-qa">
+    <div class="q">${q}</div>
+    <div class="ra-yn">
+      <button class="${RA_STATE.recuperacao[i]==='sim'?'sel-sim':''}" onclick="raSetChoice('recuperacao',${i},'sim')">Sim</button>
+      <button class="${RA_STATE.recuperacao[i]==='nao'?'sel-nao':''}" onclick="raSetChoice('recuperacao',${i},'nao')">Não</button>
+    </div>
+  </div>`).join('');
+}
+function raRenderControles(){
+  const box = document.getElementById('raControlesBody'); if(!box) return;
+  const c = RA_STATE.controles;
+  box.innerHTML = `<div class="ra-chipgrid">${RA_CONTROLES_ITEMS.map(it=>raChipHTML('controles', it, c[it.key], null, false)).join('')}${raOutrosChipHTML('controles', c.outros, c.outrosDesc, false)}</div>`;
+}
+function raRenderStatus(){
+  const box = document.getElementById('raStatusBody'); if(!box) return;
+  const hint = document.getElementById('raStatusSuggestion');
+  const r = raComputeRisk();
+  if(hint){
+    hint.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Sugestão com base nas respostas acima: <b style="color:${r.color}">${r.suggested==='liberada'?'Operação Liberada':r.suggested==='restricoes'?'Liberada com Restrições':'Operação Não Liberada'}</b>. A decisão final é sempre do responsável pela operação.`;
+  }
+  box.innerHTML = `<div class="ra-statusgrid">${RA_STATUS_OPTS.map(o=>`
+    <button type="button" class="ra-statusbtn ${o.key} ${RA_STATE.statusFinal===o.key?'sel':''}" onclick="raSetStatusFinal('${o.key}')">
+      <span class="dot">${o.dot}</span><span class="lbl">${o.label}</span>
+    </button>`).join('')}</div>`;
+}
+
+function raToggleChip(group, key){
+  RA_STATE[group][key] = !RA_STATE[group][key];
+  if(group==='equip'){ raRenderEquip(); raRenderAspectos(); }
+  else if(group==='local') raRenderLocal();
+  else if(group==='subst') raRenderSubst();
+  else if(group==='epi') raRenderEpi();
+  else if(group==='controles') raRenderControles();
+  raRenderStatus();
+  raMarkDirty();
+}
+function raSetQual(group, key, val){
+  RA_STATE[group][key] = val;
+  raMarkDirty();
+}
+function raSetChoice(group, i, val){
+  RA_STATE[group][i] = (RA_STATE[group][i]===val) ? '' : val;
+  if(group==='aspectos') raRenderAspectos(); else raRenderRecuperacao();
+  raRenderStatus();
+  raMarkDirty();
+}
+function raSetStatusFinal(key){
+  RA_STATE.statusFinal = (RA_STATE.statusFinal===key) ? '' : key;
+  raRenderStatus();
+  raMarkDirty();
+}
+function raSyncField(field, val){ RA_STATE[field] = val; raUpdateTailstrip(); raMarkDirty(); }
+function raToggleAgree(){
+  RA_STATE.agree = !RA_STATE.agree;
+  document.getElementById('raAgree').classList.toggle('on', RA_STATE.agree);
+  raMarkDirty();
+}
+function raRenderSigPad(){
+  const pad=document.getElementById('raSigPad'); if(!pad) return;
+  if(RA_STATE.assinaturaImg){
+    pad.classList.add('signed');
+    pad.innerHTML=`<img src="${RA_STATE.assinaturaImg}" alt="assinatura"><button type="button" class="ra-sig-del" onclick="event.stopPropagation();raClearSig()" title="Excluir assinatura" aria-label="Excluir assinatura"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+  } else {
+    pad.classList.remove('signed');
+    pad.innerHTML=`<span class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21c4-1 7-3 10-6 3-3 4-6 3-7s-4 0-7 3c-3 3-5 6-6 10z"/><path d="M14 8l2 2"/></svg>Toque para assinar (dedo ou caneta)</span>`;
+  }
+}
+function raClearSig(){
+  RA_STATE.assinaturaImg=null;
+  raRenderSigPad();
+  raMarkDirty();
+}
+function raOpenSig(){
+  openSignaturePad('Assinatura — Declaração de Anuência', dataUrl=>{
+    RA_STATE.assinaturaImg=dataUrl;
+    raRenderSigPad();
+    raMarkDirty();
+  });
+}
+
+
+function raEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function raChecklistBlock(title, items, stateObj){
+  const rows = items.map(it=>{
+    const on = !!stateObj[it.key];
+    const qual = (it.qual && on && stateObj[it.key+'Qual']) ? ` <span class="rp-qual">(${raEsc(stateObj[it.key+'Qual'])})</span>` : '';
+    return `<div class="rp-check ${on?'on':''}"><span class="mark">${on?'&#10003;':''}</span>${raEsc(it.label)}${qual}</div>`;
+  }).join('');
+  const outros = stateObj.outros ? `<div class="rp-check on"><span class="mark">&#10003;</span>Outros${stateObj.outrosDesc?': '+raEsc(stateObj.outrosDesc):''}</div>` : '';
+  return `<div class="rp-section"><h3>${raEsc(title)}</h3><div class="rp-checkgrid">${rows}${outros}</div></div>`;
+}
+
+function raYnBlock(title, questions, values){
+  const rows = questions.map((q,i)=>{
+    const v = values[i];
+    const label = v==='sim'?'SIM':v==='nao'?'NÃO':v==='na'?'N/A':'—';
+    const cls = v==='sim'?'sim':v==='nao'?'nao':v==='na'?'na':'blank';
+    return `<tr><td class="rp-qnum">${String(i+1).padStart(2,'0')}</td><td>${raEsc(q)}</td><td><span class="rp-pill ${cls}">${label}</span></td></tr>`;
+  }).join('');
+  return `<div class="rp-section"><h3>${raEsc(title)}</h3><table class="rp-table"><tbody>${rows}</tbody></table></div>`;
+}
+
+/* mesma lógica do raYnBlock, mas os itens vêm agrupados por contexto
+   (Pessoas / Área / Atmosfera / Equipamentos), com uma linha de
+   cabeçalho de grupo entre eles — usado nas Verificações Pré-Operacionais. */
+function raYnBlockGrouped(title, groupsMeta, items, values){
+  let rows = '';
+  groupsMeta.forEach(g=>{
+    const subset = items.map((it,i)=>({it,i})).filter(x=>x.it.grp===g.key);
+    if(!subset.length) return;
+    rows += `<tr class="rp-grouprow"><td colspan="3">${raEsc(g.label)}</td></tr>`;
+    subset.forEach(({it,i})=>{
+      const v = values[i];
+      const label = v==='sim'?'SIM':v==='nao'?'NÃO':v==='na'?'N/A':'—';
+      const cls = v==='sim'?'sim':v==='nao'?'nao':v==='na'?'na':'blank';
+      rows += `<tr><td class="rp-qnum"></td><td>${raEsc(it.q)}</td><td><span class="rp-pill ${cls}">${label}</span></td></tr>`;
+    });
+  });
+  return `<div class="rp-section"><h3>${raEsc(title)}</h3><table class="rp-table"><tbody>${rows}</tbody></table></div>`;
+}
+
+function raStepsBlock(title, steps){
+  const rows = steps.map((s,i)=>`<tr><td class="rp-qnum">${i+1}</td><td>${raEsc(s)}</td></tr>`).join('');
+  return `<div class="rp-section"><h3>${raEsc(title)}</h3><table class="rp-table"><tbody>${rows}</tbody></table></div>`;
+}
+
+/* ---------- estilos e moldura compartilhados por todos os relatórios exportados ---------- */
+function rpStyles(){
+  return `
+  @page{ size:A4; margin:15mm 14mm 16mm; }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#DDE4EC}
+  body{font-family:'IBM Plex Sans',Arial,sans-serif;color:#1A2432;font-size:12.5px;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rp-toolbar{position:sticky;top:0;z-index:10;background:#0B2545;color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'IBM Plex Sans',sans-serif}
+  .rp-toolbar span{font-size:12.5px;color:#C6D8EB}
+  .rp-toolbar button{background:#2BA9E0;color:#fff;border:none;border-radius:7px;padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .rp-toolbar button:hover{filter:brightness(1.08)}
+  .rp-page{max-width:210mm;margin:26px auto 60px;background:#fff;padding:15mm 14mm 16mm;box-shadow:0 6px 28px rgba(11,37,69,.18);border-radius:3px}
+
+  .rp-header{display:flex;align-items:center;gap:16px;padding-bottom:14px;border-bottom:3px solid #2BA9E0;margin-bottom:18px}
+  .rp-logo{width:48px;height:48px;border-radius:11px;background:#0B2545;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .rp-logo img{width:33px;height:33px;object-fit:contain}
+  .rp-title{flex:1;min-width:0}
+  .rp-title h1{font-size:19px;margin:0 0 3px;color:#0B2545}
+  .rp-title .sub{font-size:11px;color:#5A6B7F}
+  .rp-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+  .rp-chip{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:#134074;background:#EEF3F9;border:1px solid #DCE6F1;padding:2px 8px;border-radius:5px}
+  .rp-risk{display:flex;align-items:center;gap:16px;border-radius:10px;padding:13px 18px;margin-bottom:20px;border:1px solid #ccc;background:#f5f5f5}
+  .rp-risk .n{font-size:28px;font-weight:800;font-family:'IBM Plex Mono',monospace;min-width:56px;text-align:center}
+  .rp-risk .t{flex:1}
+  .rp-risk .t b{text-transform:uppercase;letter-spacing:.05em;font-size:12.5px}
+  .rp-risk .t div{font-size:11px;color:#5A6B7F;margin-top:3px}
+  .rp-statrow{display:flex;gap:12px;margin-bottom:18px}
+  .rp-stat{flex:1;background:#0B2545;border-radius:9px;padding:10px 14px;text-align:center}
+  .rp-stat .k{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#C6D8EB}
+  .rp-stat .v{font-size:20px;font-weight:800;color:#fff;font-family:'IBM Plex Mono',monospace;margin-top:2px}
+  .rp-section{margin-bottom:17px;break-inside:avoid}
+  .rp-section h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#134074;border-bottom:1.5px solid #DCE6F1;padding-bottom:5px;margin:0 0 10px}
+  .rp-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 24px}
+  .rp-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+  .rp-field{border-bottom:1px solid #E4EAF1;padding:3px 0 6px}
+  .rp-field .k{font-size:9px;text-transform:uppercase;color:#8A99AB;letter-spacing:.04em}
+  .rp-field .v{font-size:12.5px;color:#1A2432;margin-top:2px;min-height:14px}
+  .rp-checkgrid{display:flex;flex-wrap:wrap;gap:7px 20px}
+  .rp-check{font-size:12px;color:#8A99AB;display:flex;align-items:center;gap:6px}
+  .rp-check .mark{width:14px;height:14px;border:1.4px solid #999;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex-shrink:0}
+  .rp-check.on{color:#1A2432;font-weight:600}
+  .rp-check.on .mark{background:#2BA9E0;border-color:#2BA9E0}
+  .rp-qual{color:#5A6B7F;font-weight:400}
+  .rp-table{width:100%;border-collapse:collapse}
+  .rp-table tr{break-inside:avoid}
+  .rp-table th{background:#0B2545;color:#fff;padding:7px 6px;text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;font-weight:600}
+  .rp-table td{padding:6px 6px;border-bottom:1px solid #EEF3F9;font-size:11.5px;vertical-align:middle}
+  .rp-table tbody tr:nth-child(even){background:#FAFBFC}
+  .rp-qnum{font-family:'IBM Plex Mono',monospace;color:#8A99AB;font-size:10px;width:20px}
+  .rp-pill{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.04em;padding:2px 10px;border-radius:99px;text-transform:uppercase;white-space:nowrap}
+  .rp-pill.sim{background:#E7F4EC;color:#1E7B4F}
+  .rp-pill.nao{background:#FBEAE8;color:#B42318}
+  .rp-pill.na{background:#F0F2F5;color:#5A6B7F}
+  .rp-pill.blank{background:#F0F2F5;color:#8A99AB}
+  .rp-sigcell{text-align:center;width:38px}
+  .rp-sigcell img{height:22px;max-width:52px;object-fit:contain;vertical-align:middle}
+  .rp-sigcell .chk{color:#1E7B4F;font-weight:700}
+  .rp-grouprow td{background:#EEF3F9;color:#134074;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:6px 6px}
+  .rp-status-final{display:flex;align-items:center;gap:10px;border:1.5px solid #ccc;border-radius:9px;padding:12px 16px}
+  .rp-status-final .dot{font-size:20px;line-height:1}
+  .rp-status-final .lbl{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .rp-declare{background:#FAFAFA;border:1px solid #E4EAF1;border-radius:8px;padding:13px 15px;font-size:11.5px;color:#5A6B7F;line-height:1.65}
+  .rp-declfields{margin-top:14px}
+  .rp-signblock{margin-top:32px;display:flex;justify-content:center;gap:40px;flex-wrap:wrap}
+  .rp-signinner{width:70%;max-width:280px;text-align:center}
+  .rp-signline{min-height:58px;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #999;padding-bottom:6px}
+  .rp-signline img{max-height:58px;max-width:100%;object-fit:contain}
+  .rp-signcap{margin-top:7px;font-size:10.5px;color:#5A6B7F}
+  .rp-signcap b{color:#1A2432;font-weight:600}
+  .rp-footer{margin-top:24px;padding-top:11px;border-top:1px solid #E4EAF1;font-size:9.5px;color:#8A99AB;display:flex;justify-content:space-between}
+
+  @media print{
+    html,body{background:#fff}
+    .rp-toolbar{display:none}
+    .rp-page{max-width:none;margin:0;padding:0;box-shadow:none;border-radius:0}
+  }`;
+}
+
+/* headHtml = cabeçalho (logo+título+chips) já pronto · bodyHtml = seções do documento */
+function rpShell(pageTitle, headHtml, bodyHtml){
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>${pageTitle}</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>${rpStyles()}</style></head>
+<body>
+  <div class="rp-toolbar"><span>Pré-visualização — o PDF final não mostra esta barra</span><button onclick="window.print()">Imprimir / Salvar como PDF</button></div>
+  <div class="rp-page">
+    ${headHtml}
+    ${bodyHtml}
+  </div>
+</body></html>`;
+}
+function rpOpenWindow(html){
+  const win = window.open('', '_blank');
+  if(!win){ alert('Não foi possível abrir a janela do relatório. Verifique se o navegador está bloqueando pop-ups para este site.'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+function rpSigCell(val){
+  if(!val) return '—';
+  if(typeof val==='string' && val.indexOf('data:image')===0) return `<img src="${val}" alt="assinatura">`;
+  return '<span class="chk">&#10003;</span>';
+}
+
+/* ================================================================
+   PDF IDÊNTICO NO DRIVE — gera o PDF no próprio navegador (html2pdf.js),
+   a partir do MESMO HTML da pré-visualização, e envia pronto pro Drive.
+   Assim o Apps Script só salva os bytes, sem precisar "redesenhar" nada
+   no Google Docs — o resultado é visualmente idêntico ao exportado aqui.
+   ================================================================ */
+let HTML2PDF_LOADING = null;
+function ensureHtml2Pdf(){
+  if(window.html2pdf) return Promise.resolve();
+  if(HTML2PDF_LOADING) return HTML2PDF_LOADING;
+  HTML2PDF_LOADING = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error('Falha ao carregar html2pdf.js'));
+    document.head.appendChild(s);
+  });
+  return HTML2PDF_LOADING;
+}
+function blobToBase64(blob){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onloadend = ()=>{ resolve(String(reader.result).split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+/* Renderiza headHtml+bodyHtml (o mesmo conteúdo usado na pré-visualização) num
+   container fora da tela e converte em PDF. Retorna um Blob de PDF, ou null
+   se falhar (nesse caso quem chamou deve seguir sem pdfBase64, como fallback). */
+async function gerarPdfBlob(headHtml, bodyHtml){
+  try{ await ensureHtml2Pdf(); }catch(e){ console.error('html2pdf.js não carregou:', e); return null; }
+
+  // Importante: deixar left:0 (só sobe pra fora da tela verticalmente) — um left
+  // muito negativo bagunça a medição de largura do html2canvas e corta o conteúdo.
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:0;top:-10000px;width:210mm;background:#fff;z-index:-1';
+  // padding:0 aqui de propósito — a margem da página passa a ser controlada
+  // pelo opt.margin do html2pdf logo abaixo, que se repete em TODAS as
+  // páginas (documentos longos deixavam de ter respiro a partir da 2ª página).
+  holder.innerHTML = `<style>${rpStyles()}</style><div class="rp-page" style="margin:0;padding:0;box-shadow:none;border-radius:0">${headHtml}${bodyHtml}</div>`;
+  document.body.appendChild(holder);
+
+  try{
+    const el = holder.querySelector('.rp-page');
+    await waitForImages(el);
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const opt = {
+      margin: [15,14,16,14], // topo, esquerda, baixo, direita (mm) — repete em cada página
+      image: { type:'jpeg', quality:0.95 },
+      html2canvas: { scale:2, useCORS:true, backgroundColor:'#ffffff' },
+      jsPDF: { unit:'mm', format:'a4', orientation:'portrait' },
+      pagebreak: { mode:'css' }
+    };
+    const blob = await window.html2pdf().set(opt).from(el).outputPdf('blob');
+    return blob;
+  }catch(e){
+    console.error('Falha ao gerar PDF com html2pdf.js:', e);
+    return null;
+  }finally{
+    document.body.removeChild(holder);
+  }
+}
+
+/* Espera todas as <img> de um container terminarem de carregar (ou falharem)
+   antes de continuar — sem isso, uma imagem grande (como a logo do
+   certificado) pode ainda não estar pintada na tela quando o html2canvas
+   tira o "print", resultando numa página em branco. */
+function waitForImages(container, timeoutMs){
+  const imgs = [...container.querySelectorAll('img')];
+  if(!imgs.length) return Promise.resolve();
+  const perImg = imgs.map(img=>{
+    if(img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(resolve=>{
+      img.addEventListener('load', resolve, {once:true});
+      img.addEventListener('error', resolve, {once:true}); // não trava se uma imagem falhar
+    });
+  });
+  return Promise.race([
+    Promise.all(perImg),
+    new Promise(resolve=>setTimeout(resolve, timeoutMs||4000))
+  ]);
+}
+
+function fnPart(v, fallback){
+  const s = String(v==null?'':v).trim();
+  if(!s) return fallback;
+  const clean = s.normalize('NFD').replace(/[\u0300-\u036f]/g,'') // remove acentos
+    .replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  return clean || fallback;
+}
+function fnData(iso){
+  if(!iso) return 'sem_data';
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : fnPart(iso,'sem_data');
+}
+function buildDriveFileName(baseName, parts){
+  return [baseName, ...parts.filter(Boolean)].join('_') + '.pdf';
+}
+
+function raBuildReport(){
+  const risk = raComputeRisk();
+  const clienteNome = raEsc(RA_STATE.cliente || 'sem cliente');
+  const statusOpt = RA_STATUS_OPTS.find(o=>o.key===RA_STATE.statusFinal);
+
+  const headHtml = `
+  <div class="rp-header">
+    <div class="rp-logo"><img src="${XD4_SYMBOL}" alt="XD4"></div>
+    <div class="rp-title">
+      <h1>Risk Assessment</h1>
+      <div class="sub">Avaliação de risco antes da missão · ${raEsc(RA_STATE.cliente)||'—'} · ${raEsc(RA_STATE.dataMissao)||'—'}</div>
+      <div class="rp-meta">
+        <span class="rp-chip">DOC FO-OPE-002</span>
+        <span class="rp-chip">REV 01</span>
+      </div>
+    </div>
+  </div>
+  <div class="rp-risk" style="background:${risk.bg};border-color:${risk.color}">
+    <div class="n" style="color:${risk.color}">${risk.score}</div>
+    <div class="t"><b style="color:${risk.color}">Indicador de risco: ${risk.label}</b><div>Baseado em ${risk.hazardCount} risco(s) identificado(s) no local/substâncias e ${risk.gapCount} item(ns) não conforme(s) nas verificações e no plano de recuperação.</div></div>
+  </div>`;
+
+  const bodyHtml = `
+  <div class="rp-section"><h3>Dados da Missão</h3>
+    <div class="rp-grid">
+      <div class="rp-field"><div class="k">Data da Missão</div><div class="v">${raEsc(RA_STATE.dataMissao)||'—'}</div></div>
+      <div class="rp-field"><div class="k">Cliente / Empresa</div><div class="v">${raEsc(RA_STATE.cliente)||'—'}</div></div>
+      <div class="rp-field"><div class="k">Proposta Comercial</div><div class="v">${raEsc(RA_STATE.proposta)||'—'}</div></div>
+      <div class="rp-field"><div class="k">Ordem de Serviço</div><div class="v">${raEsc(RA_STATE.ordemServico)||'—'}</div></div>
+      <div class="rp-field"><div class="k">Local do Ativo</div><div class="v">${raEsc(RA_STATE.localAtivo)||'—'}</div></div>
+      <div class="rp-field"><div class="k">Descrição do Ativo</div><div class="v">${raEsc(RA_STATE.descAtivo)||'—'}</div></div>
+    </div>
+  </div>
+
+  <div class="rp-section"><h3>Contato no Local</h3>
+    <div class="rp-grid">
+      <div class="rp-field"><div class="k">Nome</div><div class="v">${raEsc(RA_STATE.contatoNome)||'—'}</div></div>
+      <div class="rp-field"><div class="k">Telefone</div><div class="v">${raEsc(RA_STATE.contatoTelefone)||'—'}</div></div>
+      <div class="rp-field"><div class="k">Função</div><div class="v">${raEsc(RA_STATE.contatoFuncao)||'—'}</div></div>
+    </div>
+  </div>
+
+  ${raChecklistBlock('Equipamento', RA_EQUIP_ITEMS, RA_STATE.equip)}
+  ${raChecklistBlock('Riscos do Local', RA_LOCAL_ITEMS, RA_STATE.local)}
+  ${raChecklistBlock('Substâncias Perigosas', RA_SUBST_ITEMS, RA_STATE.subst)}
+  ${raChecklistBlock('EPIs Obrigatórios', RA_EPI_ITEMS, RA_STATE.epi)}
+
+  ${raYnBlockGrouped('Verificações Pré-Operacionais — '+(RA_EQUIP_ITEMS.find(e=>e.key===raActiveEquipKey())||{}).label, RA_ASPECTOS_GRUPOS, raActiveAspectos(), RA_STATE.aspectos)}
+  ${raYnBlock('Plano de Recuperação do Equipamento', RA_RECUPERACAO, RA_STATE.recuperacao)}
+  ${raStepsBlock('Procedimento em Caso de Acidente', RA_ACIDENTE_STEPS)}
+
+  ${raChecklistBlock('Controles Mitigatórios Adotados', RA_CONTROLES_ITEMS, RA_STATE.controles)}
+
+  <div class="rp-section"><h3>Observações da Missão</h3>
+    <div class="rp-field"><div class="v">${raEsc(RA_STATE.observacoes)||'—'}</div></div>
+  </div>
+
+  <div class="rp-section"><h3>Status da Operação</h3>
+    <div class="rp-status-final" style="border-color:${statusOpt?statusOpt.color:'#ccc'}">
+      <span class="dot">${statusOpt?statusOpt.dot:'—'}</span>
+      <span class="lbl" style="color:${statusOpt?statusOpt.color:'#5A6B7F'}">${statusOpt?statusOpt.label:'Status não definido'}</span>
+    </div>
+  </div>
+
+  <div class="rp-section"><h3>Declaração Final</h3>
+    <div class="rp-declare">Confirmo que os riscos conhecidos desta operação foram avaliados, que os controles mitigatórios necessários foram implementados, e que a operação está autorizada conforme a classificação de status definida acima.</div>
+    <div class="rp-grid rp-declfields">
+      <div class="rp-field"><div class="k">Local</div><div class="v">${raEsc(RA_STATE.declLocal)||'—'}</div></div>
+      <div class="rp-field"><div class="k">Data</div><div class="v">${raEsc(RA_STATE.declData)||'—'}</div></div>
+    </div>
+    <div class="rp-signblock">
+      <div class="rp-signinner">
+        <div class="rp-signline">${RA_STATE.assinaturaImg?`<img src="${RA_STATE.assinaturaImg}" alt="assinatura">`:''}</div>
+        <div class="rp-signcap">Assinatura do Responsável${RA_STATE.declNome?` — <b>${raEsc(RA_STATE.declNome)}</b>`:''}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rp-footer"><span>XD4 Blue Book — Sistema de Gestão Operacional</span><span>FO-OPE-002 · Risk Assessment</span></div>`;
+
+  return { headHtml, bodyHtml, title:'Risk Assessment — '+clienteNome, filename:buildDriveFileName('Risk_Assessment', [fnData(RA_STATE.dataMissao), fnPart(RA_STATE.cliente,'sem_cliente')]) };
+}
+
+function raExportReport(){
+  const r = raBuildReport();
+  rpOpenWindow(rpShell(r.title, r.headHtml, r.bodyHtml));
+}
+
+function raUpdateTailstrip(){
+  const c=document.getElementById('raTailCliente'); if(c) c.textContent = RA_STATE.cliente || '—';
+  const d=document.getElementById('raTailData'); if(d) d.textContent = RA_STATE.dataMissao || '—';
+  const l=document.getElementById('raTailLocal'); if(l) l.textContent = RA_STATE.localAtivo || '—';
+  const eq=document.getElementById('raTailEquip');
+  if(eq){
+    const names = RA_EQUIP_ITEMS.filter(it=>RA_STATE.equip[it.key]).map(it=>it.label);
+    eq.textContent = names.length ? names.join(', ') : '—';
+  }
+}
+function raComputeRisk(){
+  const hazardCount = RA_LOCAL_ITEMS.filter(it=>RA_STATE.local[it.key]).length
+    + (RA_STATE.local.outros?1:0)
+    + RA_SUBST_ITEMS.filter(it=>RA_STATE.subst[it.key]).length
+    + (RA_STATE.subst.outros?1:0);
+  const gapCount = RA_STATE.aspectos.filter(v=>v==='nao').length
+    + RA_STATE.recuperacao.filter(v=>v==='nao').length;
+  const score = Math.min(100, hazardCount*10 + gapCount*15);
+  let level='low', label='Baixo', color='#1E7B4F', bg='#E7F4EC', suggested='liberada';
+  if(score>=50){ level='high'; label='Alto'; color='#B42318'; bg='#FBEAE8'; suggested='nao_liberada'; }
+  else if(score>=20){ level='med'; label='Médio'; color='#B5820A'; bg='#FBF3DE'; suggested='restricoes'; }
+  return {score,level,label,color,bg,hazardCount,gapCount,suggested};
+}
+function raMarkDirty(){
+  const s = document.getElementById('raStatus');
+  if(s && s.classList.contains('saved')){ s.classList.remove('saved'); document.getElementById('raStatusText').textContent='Rascunho não salvo'; }
+}
+function raToast(msg){
+  const t = document.getElementById('raToast'); if(!t) return;
+  document.getElementById('raToastText').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), msg.length>60 ? 7000 : 3200);
+}
+async function raSave(){
+  const s = document.getElementById('raStatus');
+  s.classList.add('saved');
+  document.getElementById('raStatusText').textContent = 'Salvo às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  const rel = raBuildReport();
+  const pdfBlob = await gerarPdfBlob(rel.headHtml, rel.bodyHtml);
+  const extra = pdfBlob ? { pdfBase64: await blobToBase64(pdfBlob), nomeArquivoSugerido: rel.filename } : undefined;
+  if(!pdfBlob){ console.warn('PDF idêntico não pôde ser gerado no navegador; o Drive vai usar o layout padrão do Google Docs como alternativa.'); }
+
+  const r = await sendToDrive('risk_assessment', RA_STATE, extra);
+  if(r.reason==='timeout_assumed_ok'){
+    raToast('Risk Assessment enviado ao Google Drive (envio confirmado; aguardando resposta de detalhes)');
+  } else if(r.ok){
+    raToast('Risk Assessment salvo e enviado ao Google Drive');
+    }
+  else if(r.reason==='not_configured'){ raToast('Risk Assessment salvo localmente (Google Drive não configurado)'); }
+  else { console.error('Detalhe do erro de envio:', r); raToast('Falha ao enviar ao Drive: '+(r.reason||'erro desconhecido')+'. Veja o console (F12) para detalhes.'); }
+
+  raShowThankYou();
+}
+
+
+function raShowThankYou(){
+  document.getElementById('raRootWrap').classList.add('hidden');
+  document.getElementById('thankYouWrap').classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+function raRestart(){
+  document.getElementById('thankYouWrap').classList.add('hidden');
+  document.getElementById('raRootWrap').classList.remove('hidden');
+  renderRiskAssessment();
+  window.scrollTo(0,0);
+}
+
+document.getElementById('pubLogo').src = XD4_SYMBOL;
+renderRiskAssessment();
+</script>
+</body>
+</html>
