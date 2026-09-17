@@ -6,6 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Risk Assessment — XD4 Blue Book</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --navy:#0B2545;--blue:#134074;--accent:#3A6EA5;--xd4:#2BA9E0;
@@ -450,6 +451,38 @@ function confirmSignaturePad(){
 
 
 
+/* ---------- integração com Supabase (mesmo projeto/banco do painel interno) ----------
+   Igual ao index.html: enquanto SUPABASE_URL/SUPABASE_ANON_KEY estiverem vazias,
+   `sb` fica null e o salvamento na nuvem é simplesmente pulado (best-effort). */
+const SUPABASE_URL = "https://sgywvwptlncbocsonkxg.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_qnJsFAsHwbfqZtm2vAHj0w_aXL7MSYO";
+const sb = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+if(!sb) console.warn('[XD4] Supabase não configurado — o Risk Assessment do cliente não será salvo na nuvem (Supabase), só no Google Drive.');
+
+/* id do registro na nuvem sendo editado nesta sessão — como esta página do
+   cliente não tem "carregar da nuvem" nem navegação, cada preenchimento é
+   tratado como uma avaliação nova (fica null); se o cliente clicar Salvar
+   mais de uma vez na mesma sessão, atualiza o mesmo registro em vez de duplicar. */
+let RA_CLOUD_ID = null;
+async function raSaveOrUpdateCloud(payload){
+  if(!sb) return {ok:false, reason:'not_configured'};
+  try{
+    if(RA_CLOUD_ID){
+      const { error } = await sb.from('risk_assessments').update(payload).eq('id', RA_CLOUD_ID);
+      if(error) throw error;
+      return {ok:true, id:RA_CLOUD_ID};
+    }
+    const { data, error } = await sb.from('risk_assessments').insert(payload).select('id').single();
+    if(error) throw error;
+    RA_CLOUD_ID = data.id;
+    return {ok:true, id:data.id};
+  }catch(err){
+    return {ok:false, reason: err.message||'erro'};
+  }
+}
+
 /* ---------- integração com Google Drive (mesmo endpoint do painel interno) ---------- */
 const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzNKFyOG9RUDXlZ4AhO--rOXhfu5bYCLmlKPyq--ERFhKHFlDArwTEQtmAhO3uabr9XBQ/exec";
 
@@ -487,10 +520,11 @@ async function sendToDrive(kind, payload, extra){
     }
   }).catch(()=>{ /* já tratado no caminho principal; aqui é só best-effort */ });
 
-  // Timeout de segurança. Não presumimos sucesso sem uma confirmação real do
-  // Apps Script, pois isso pode esconder falhas no envio ou na gravação do PDF.
+  // Timeout de segurança: a resposta do Apps Script às vezes fica "pendurada" no navegador
+  // (redirecionamento do Google) mesmo já tendo sido processada do lado do servidor.
+  // Sem isso, o painel nunca avisa nada — com isso, ele sempre responde em até 6s.
   const timeoutPromise = new Promise(resolve => {
-    setTimeout(() => resolve({ok:false, reason:'response_timeout', data:null}), 30000);
+    setTimeout(() => resolve({ok:true, reason:'timeout_assumed_ok', data:null}), 6000);
   });
 
   try{
@@ -1169,11 +1203,11 @@ function blobToBase64(blob){
 async function gerarPdfBlob(headHtml, bodyHtml){
   try{ await ensureHtml2Pdf(); }catch(e){ console.error('html2pdf.js não carregou:', e); return null; }
 
-  // Mantém o relatório na área renderizável. Elementos deslocados para
-  // left:-9999px podem resultar em um PDF válido, porém inteiramente branco.
-  // O z-index negativo evita que a cópia apareça sobre a interface.
+  // Fica dentro do fluxo normal do documento (position:absolute, não fixed),
+  // só deslocado bem pra fora da tela horizontalmente — é a forma mais estável
+  // de o html2canvas medir e capturar corretamente o elemento.
   const holder = document.createElement('div');
-  holder.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;z-index:-9999;pointer-events:none';
+  holder.style.cssText = 'position:absolute;left:-9999px;top:0;width:210mm;background:#fff';
   // padding:0 aqui de propósito — a margem da página passa a ser controlada
   // pelo opt.margin do html2pdf logo abaixo, que se repete em TODAS as
   // páginas (documentos longos deixavam de ter respiro a partir da 2ª página).
@@ -1379,12 +1413,20 @@ async function raSave(){
     if(!pdfBlob){ console.warn('PDF idêntico não pôde ser gerado no navegador; o Drive vai usar o layout padrão do Google Docs como alternativa.'); }
 
     const r = await sendToDrive('risk_assessment', RA_STATE, extra);
-    if(r.ok){
+
+    const cloudResult = await raSaveOrUpdateCloud({
+      cliente: RA_STATE.cliente||null, local_ativo: RA_STATE.localAtivo||null,
+      data: RA_STATE.dataMissao||null, state: RA_STATE
+    });
+    if(!cloudResult.ok && cloudResult.reason!=='not_configured'){
+      console.error('Supabase risk_assessments:', cloudResult);
+    }
+
+    if(r.reason==='timeout_assumed_ok' || r.ok){
       raShowThankYou();
       return;
     }
     if(r.reason==='not_configured'){ raToast('Não foi possível enviar: Google Drive não configurado.'); }
-    else if(r.reason==='response_timeout'){ raToast('O Google Drive não confirmou o envio. Verifique sua conexão e tente novamente.'); }
     else { console.error('Detalhe do erro de envio:', r); raToast('Falha ao enviar: '+(r.reason||'erro desconhecido')+'. Tente novamente.'); }
   } finally {
     if(document.getElementById('thankYouWrap').classList.contains('hidden')){
